@@ -21,6 +21,10 @@ namespace Planet.Presentation
     [ExecuteAlways]
     public sealed class RtsCamera : MonoBehaviour
     {
+        [Header("Пресет настроек (общий для карт)")]
+        [Tooltip("Если задан — зум/панорама/поворот/наклон берутся отсюда (вынесено в настройки).")]
+        [SerializeField] private CameraSettings _settings;
+
         [Header("Старт (кадрирование уровня)")]
         [SerializeField] private Vector3 _startPivot = Vector3.zero;
         [SerializeField] private float _startYaw = 0f;
@@ -41,7 +45,7 @@ namespace Planet.Presentation
         [SerializeField] private float _rotateSpeed = 90f;            // град/с (Q/E)
         [Tooltip("Чувствительность поворота при зажатом Alt + движении мыши, град/пиксель.")]
         [SerializeField] private float _mouseRotateSensitivity = 0.2f;
-        [SerializeField] private float _pitch = 50f;                 // наклон камеры вниз
+        [SerializeField] private float _pitch = 60f;                 // наклон камеры вниз (fallback)
 
         [Header("СКМ — панорама с ускорением")]
         [Tooltip("Зажать СКМ и вести мышь: камера ускоряется в сторону смещения курсора. Чем дальше увели мышь от точки нажатия — тем быстрее. Это множитель скорости.")]
@@ -83,12 +87,31 @@ namespace Planet.Presentation
         /// <summary>Применить стартовые параметры к рабочему состоянию и пересобрать трансформ.</summary>
         private void Configure()
         {
+            if (_settings != null) SyncFromSettings();
             if (_maxDistance < _minDistance) _maxDistance = _minDistance;
             _distance = Mathf.Clamp(_startDistance, _minDistance, _maxDistance);
             _targetDistance = _distance;
             _yaw = _startYaw;
             _pivot = ClampToMap(_startPivot);
             ApplyTransform();
+        }
+
+        /// <summary>Скопировать «ощущение» камеры из ассета настроек в рабочие поля.</summary>
+        private void SyncFromSettings()
+        {
+            _startDistance = _settings.StartDistance;
+            _minDistance = _settings.MinDistance;
+            _maxDistance = _settings.MaxDistance;
+            _zoomStep = _settings.ZoomStep;
+            _zoomLerpSpeed = _settings.ZoomLerpSpeed;
+            _panSpeed = _settings.PanSpeed;
+            _edgeScrollPixels = _settings.EdgeScrollPixels;
+            _edgeScrollEnabled = _settings.EdgeScrollEnabled;
+            _mmbPanAcceleration = _settings.MmbPanAcceleration;
+            _mmbDeadZonePixels = _settings.MmbDeadZonePixels;
+            _rotateSpeed = _settings.RotateSpeed;
+            _mouseRotateSensitivity = _settings.MouseRotateSensitivity;
+            _pitch = _settings.Pitch;
         }
 
         private void Update()

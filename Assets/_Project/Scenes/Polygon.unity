@@ -197,6 +197,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0e8b84c639162f419e798c0b7613234, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Planet.Presentation::Planet.Presentation.RtsCamera
+  _settings: {fileID: 11400000, guid: c0000000000000000000000000000b01, type: 2}
   _startPivot: {x: 0, y: 0, z: 0}
   _startYaw: 0
   _startDistance: 32
@@ -209,7 +210,7 @@ MonoBehaviour:
   _maxDistance: 55
   _rotateSpeed: 90
   _mouseRotateSensitivity: 0.2
-  _pitch: 50
+  _pitch: 60
   _mmbPanAcceleration: 0.2
   _mmbDeadZonePixels: 6
   _mapMin: {x: -50, y: -50}
