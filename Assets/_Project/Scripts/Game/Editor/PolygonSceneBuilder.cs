@@ -21,11 +21,21 @@ namespace Planet.Game.Editor
         private const string PolygonScenePath = "Assets/_Project/Scenes/Polygon.unity";
         private const string ArtFolder = "Assets/_Project/Art";
         private const string GroundMaterialPath = ArtFolder + "/GroundMaterial.mat";
-        private const string CursorFolder = ArtFolder + "/Cursors";
-        private const string CursorTexturePath = CursorFolder + "/Cursor.png";
+        private const string CursorFolder = ArtFolder + "/Cursor";
+        private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
+        private const string ResourcesFolder = "Assets/_Project/Resources";
+        private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
 
         private static readonly Color GroundColor = new Color(0.30f, 0.55f, 0.25f);
         private const float MapExtent = 50f; // половина стороны карты, м
+
+        // Контур курсора-стрелки (координаты от левого-верхнего угла, кончик в (0,0) = hotspot).
+        private const int CursorTexSize = 32;
+        private static readonly Vector2[] ArrowPolygon =
+        {
+            new Vector2(0, 0), new Vector2(0, 16), new Vector2(4, 12),
+            new Vector2(7, 18), new Vector2(9, 17), new Vector2(6, 11), new Vector2(11, 11)
+        };
 
         [MenuItem("Planet/Setup/Build Polygon Scene")]
         public static void BuildPolygonScene()
@@ -42,6 +52,7 @@ namespace Planet.Game.Editor
             }
 
             SetupRtsLevel(scene);
+            EnsureCursorSettings();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, PolygonScenePath);
@@ -55,6 +66,7 @@ namespace Planet.Game.Editor
         {
             Scene scene = SceneManager.GetActiveScene();
             SetupRtsLevel(scene);
+            EnsureCursorSettings();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("[Planet] Активная сцена настроена как RTS-уровень. Не забудьте сохранить (Ctrl+S).");
         }
@@ -65,33 +77,118 @@ namespace Planet.Game.Editor
             EnsureSun();
             EnsureGround();
             EnsureCamera();
-            EnsureCursor();
             EnsureEnvironmentRoot();
             EnsureGameRoot();
         }
 
-        private static void EnsureCursor()
+        [MenuItem("Planet/Setup/Create Cursor Settings")]
+        public static void CreateCursorSettingsMenu()
         {
-            if (Object.FindFirstObjectByType<CursorController>() != null) return;
+            EnsureCursorSettings();
+            AssetDatabase.SaveAssets();
+            var settings = AssetDatabase.LoadAssetAtPath<CursorSettings>(CursorSettingsPath);
+            if (settings != null) Selection.activeObject = settings;
+        }
+
+        /// <summary>
+        /// Создать (если нет) глобальный ассет курсора в Resources. Применяется на старте
+        /// во всех сценах (см. CursorBootstrap). Если своего Cursor.png нет — генерирует стрелку.
+        /// </summary>
+        private static void EnsureCursorSettings()
+        {
+            EnsureCursorTexture();
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(CursorTexturePath);
+
+            var settings = AssetDatabase.LoadAssetAtPath<CursorSettings>(CursorSettingsPath);
+            if (settings == null)
+            {
+                EnsureFolder(ResourcesFolder);
+                settings = ScriptableObject.CreateInstance<CursorSettings>();
+                settings.Texture = tex;
+                AssetDatabase.CreateAsset(settings, CursorSettingsPath);
+            }
+            else if (settings.Texture == null && tex != null)
+            {
+                settings.Texture = tex;
+                EditorUtility.SetDirty(settings);
+            }
+        }
+
+        /// <summary>
+        /// Подготовить текстуру курсора. Если файл уже есть (твой PNG) — только чиним импорт (Texture Type = Cursor).
+        /// Если нет — генерируем стрелку-заглушку.
+        /// </summary>
+        private static void EnsureCursorTexture()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(CursorTexturePath) != null)
+            {
+                EnsureCursorImportSettings(CursorTexturePath);
+                return;
+            }
 
             EnsureFolder(CursorFolder);
-            var go = new GameObject("Cursor");
-            var cc = go.AddComponent<CursorController>();
+            int size = CursorTexSize;
 
-            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(CursorTexturePath);
-            if (tex != null)
+            bool[,] fill = new bool[size, size]; // [x, y] в координатах от левого-верхнего угла
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                    fill[x, y] = PointInPolygon(x + 0.5f, y + 0.5f, ArrowPolygon);
+
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    Color c;
+                    if (fill[x, y]) c = Color.white;
+                    else if (HasFillNeighbor(fill, x, y, size)) c = Color.black; // авто-обводка
+                    else c = new Color(0f, 0f, 0f, 0f);
+                    tex.SetPixel(x, size - 1 - y, c); // origin текстуры — снизу, координаты — сверху
+                }
+            tex.Apply();
+
+            System.IO.File.WriteAllBytes(CursorTexturePath, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(CursorTexturePath);
+            EnsureCursorImportSettings(CursorTexturePath);
+            Debug.Log($"[Planet] Сгенерирован курсор-стрелка: {CursorTexturePath}. Замените файл на свой PNG при желании.");
+        }
+
+        /// <summary>Выставить текстуре правильный импорт для курсора (если ещё не выставлен).</summary>
+        private static void EnsureCursorImportSettings(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is not TextureImporter importer) return;
+
+            bool changed = false;
+            if (importer.textureType != TextureImporterType.Cursor) { importer.textureType = TextureImporterType.Cursor; changed = true; }
+            if (!importer.alphaIsTransparency) { importer.alphaIsTransparency = true; changed = true; }
+            if (importer.mipmapEnabled) { importer.mipmapEnabled = false; changed = true; }
+            if (importer.filterMode != FilterMode.Point) { importer.filterMode = FilterMode.Point; changed = true; }
+            if (changed) importer.SaveAndReimport();
+        }
+
+        private static bool PointInPolygon(float px, float py, Vector2[] poly)
+        {
+            bool inside = false;
+            for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
             {
-                var so = new SerializedObject(cc);
-                so.FindProperty("_cursorTexture").objectReferenceValue = tex;
-                so.ApplyModifiedProperties();
+                if (((poly[i].y > py) != (poly[j].y > py)) &&
+                    (px < (poly[j].x - poly[i].x) * (py - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x))
+                    inside = !inside;
             }
-            else
-            {
-                Debug.LogWarning(
-                    $"[Planet] Текстура курсора не найдена. Положите PNG в {CursorTexturePath} " +
-                    "(Inspector → Texture Type = Cursor), затем переназначьте поле Cursor Texture " +
-                    "на объекте 'Cursor' или пересоберите сцену.");
-            }
+            return inside;
+        }
+
+        private static bool HasFillNeighbor(bool[,] fill, int x, int y, int size)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = x + dx, ny = y + dy;
+                    if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+                    if (fill[nx, ny]) return true;
+                }
+            return false;
         }
 
         private static void EnsureSun()

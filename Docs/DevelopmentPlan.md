@@ -204,7 +204,7 @@ Assets/_Project/
 - Собрать/обновить полигон: меню **`Planet → Setup → Build Polygon Scene`** (создаёт землю, свет, камеру, `Environment`, `GameRoot`; идемпотентно). Запустить один раз после открытия проекта.
 - **Параметры камеры** правятся в Инспекторе на объекте `RTSCamera` (компонент `RtsCamera`) и сохраняются в сцене. Благодаря `[ExecuteAlways]` кадр обновляется прямо в редакторе при смене `pitch`/`distance`/границ.
 - **Окружение** (деревья, камни, здания) складывать в объект `Environment` — перетаскиванием примитивов/префабов в сцене.
-- **Курсор:** объект `Cursor` (компонент `CursorController`) ставит кастомный курсор и переживает смену сцен. PNG курсора кладётся в `Assets/_Project/Art/Cursors/Cursor.png` (Texture Type = Cursor); сборщик сцены подхватит его автоматически. Hotspot = кончик стрелки.
+- **Курсор (везде):** глобальный ассет `Assets/_Project/Resources/CursorSettings.asset` применяется на старте до первой сцены (`CursorBootstrap`), поэтому курсор активен во всех сценах, включая меню. PNG лежит в `Assets/_Project/Art/Cursor/Cursor.png`; меню `Planet → Setup → Create Cursor Settings` чинит импорт текстуры (Texture Type = Cursor), создаёт ассет и подхватывает текстуру (если своего PNG нет — генерирует стрелку-заглушку). Hotspot = кончик стрелки. `CursorController` остаётся для смены курсора в рантайме (атака/нельзя).
 - **Новый уровень:** `File → New Scene` → меню **`Planet → Setup → Setup Active Scene As RTS Level`** → расставить окружение → сохранить как `Assets/_Project/Scenes/<Имя>.unity`. (Скрипт сам добавит сцену в Build Settings при сборке полигона; новые карты добавляйте в Build Settings вручную или через свой пункт меню позже.)
 
 ### Как проверить

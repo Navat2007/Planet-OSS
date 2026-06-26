@@ -18,5 +18,14 @@ namespace Planet.Tests.PlayMode
 
             Object.DestroyImmediate(go);
         }
+
+        [Test]
+        public void CursorSettings_ApplyWithNullTexture_DoesNotThrow()
+        {
+            var settings = ScriptableObject.CreateInstance<CursorSettings>();
+            // Пустая текстура: Apply не трогает курсор и не бросает исключений.
+            Assert.DoesNotThrow(() => settings.Apply());
+            Object.DestroyImmediate(settings);
+        }
     }
 }

@@ -39,9 +39,11 @@ namespace Planet.Presentation
             if (_instance == this) _instance = null;
         }
 
-        /// <summary>Применить текущую текстуру курсора.</summary>
+        /// <summary>Применить текущую текстуру курсора. Пустую текстуру игнорируем,
+        /// чтобы не перетереть глобальный курсор (см. CursorBootstrap).</summary>
         public void Apply()
         {
+            if (_cursorTexture == null) return;
             Cursor.SetCursor(_cursorTexture, _hotspot, _cursorMode);
         }
 
