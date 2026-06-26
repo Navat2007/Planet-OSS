@@ -25,6 +25,10 @@ namespace Planet.Game.Editor
         private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
         private const string ResourcesFolder = "Assets/_Project/Resources";
         private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
+        private const string SettingsFolder = "Assets/_Project/Settings";
+        private const string CameraSettingsPath = SettingsFolder + "/CameraSettings.asset";
+        private const string PrefabsFolder = "Assets/_Project/Prefabs";
+        private const string CameraPrefabPath = PrefabsFolder + "/RTSCamera.prefab";
 
         private static readonly Color GroundColor = new Color(0.30f, 0.55f, 0.25f);
         private const float MapExtent = 50f; // половина стороны карты, м
@@ -216,30 +220,98 @@ namespace Planet.Game.Editor
             ground.isStatic = true;
         }
 
+        [MenuItem("Planet/Setup/Create Camera Prefab")]
+        public static void CreateCameraPrefabMenu()
+        {
+            var prefab = EnsureCameraPrefab();
+            AssetDatabase.SaveAssets();
+            if (prefab != null) Selection.activeObject = prefab;
+        }
+
+        /// <summary>
+        /// Поставить в сцену камеру-префаб (единую для всех уровней). Если в сцене уже есть «сырая»
+        /// камера — мигрировать её на префаб, сохранив границы карты и стартовую точку.
+        /// </summary>
         private static void EnsureCamera()
         {
-            if (Object.FindFirstObjectByType<RtsCamera>() != null) return;
+            GameObject prefab = EnsureCameraPrefab();
 
-            // Переиспользуем существующую камеру (из дефолтной сцены), иначе создаём.
-            Camera cam = Camera.main;
-            if (cam == null) cam = Object.FindFirstObjectByType<Camera>();
+            var existing = Object.FindFirstObjectByType<RtsCamera>();
+            if (existing != null)
+            {
+                if (PrefabUtility.IsPartOfAnyPrefab(existing.gameObject)) return; // уже инстанс префаба
 
-            GameObject go;
-            if (cam != null)
-            {
-                go = cam.gameObject;
-            }
-            else
-            {
-                go = new GameObject("RTSCamera");
-                go.AddComponent<Camera>();
-                go.AddComponent<AudioListener>();
+                ReadPlacement(existing, out var mapMin, out var mapMax, out var startPivot, out var startYaw);
+                Object.DestroyImmediate(existing.gameObject);
+                var migrated = InstantiateCameraPrefab(prefab);
+                WritePlacement(migrated.GetComponent<RtsCamera>(), mapMin, mapMax, startPivot, startYaw);
+                return;
             }
 
-            go.name = "RTSCamera";
-            go.tag = "MainCamera";
+            // Камеры нет — убираем «лишние» камеры (например, дефолтную Main Camera) и ставим префаб.
+            foreach (var c in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+                Object.DestroyImmediate(c.gameObject);
+
+            var instance = InstantiateCameraPrefab(prefab);
+            WritePlacement(instance.GetComponent<RtsCamera>(),
+                new Vector2(-MapExtent, -MapExtent), new Vector2(MapExtent, MapExtent), Vector3.zero, 0f);
+        }
+
+        /// <summary>Создать (если нет) префаб камеры с привязанным ассетом CameraSettings.</summary>
+        private static GameObject EnsureCameraPrefab()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(CameraPrefabPath);
+            if (existing != null) return existing;
+
+            EnsureFolder(PrefabsFolder);
+            var go = new GameObject("RTSCamera");
+            go.AddComponent<Camera>();
+            go.AddComponent<AudioListener>();
             var rts = go.AddComponent<RtsCamera>();
-            rts.Initialize(Vector3.zero, new Vector2(-MapExtent, -MapExtent), new Vector2(MapExtent, MapExtent));
+            AssignCameraSettings(rts);
+            go.tag = "MainCamera";
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, CameraPrefabPath);
+            Object.DestroyImmediate(go);
+            Debug.Log($"[Planet] Создан префаб камеры: {CameraPrefabPath}");
+            return prefab;
+        }
+
+        private static void AssignCameraSettings(RtsCamera rts)
+        {
+            var settings = AssetDatabase.LoadAssetAtPath<CameraSettings>(CameraSettingsPath);
+            if (settings == null) return;
+            var so = new SerializedObject(rts);
+            so.FindProperty("_settings").objectReferenceValue = settings;
+            so.ApplyModifiedProperties();
+        }
+
+        private static GameObject InstantiateCameraPrefab(GameObject prefab)
+        {
+            var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            inst.name = "RTSCamera";
+            return inst;
+        }
+
+        private static void ReadPlacement(RtsCamera rts, out Vector2 mapMin, out Vector2 mapMax,
+            out Vector3 startPivot, out float startYaw)
+        {
+            var so = new SerializedObject(rts);
+            mapMin = so.FindProperty("_mapMin").vector2Value;
+            mapMax = so.FindProperty("_mapMax").vector2Value;
+            startPivot = so.FindProperty("_startPivot").vector3Value;
+            startYaw = so.FindProperty("_startYaw").floatValue;
+        }
+
+        private static void WritePlacement(RtsCamera rts, Vector2 mapMin, Vector2 mapMax,
+            Vector3 startPivot, float startYaw)
+        {
+            var so = new SerializedObject(rts);
+            so.FindProperty("_mapMin").vector2Value = mapMin;
+            so.FindProperty("_mapMax").vector2Value = mapMax;
+            so.FindProperty("_startPivot").vector3Value = startPivot;
+            so.FindProperty("_startYaw").floatValue = startYaw;
+            so.ApplyModifiedProperties();
         }
 
         private static void EnsureEnvironmentRoot()
