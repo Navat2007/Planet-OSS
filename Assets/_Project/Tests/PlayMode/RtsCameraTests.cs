@@ -78,6 +78,21 @@ namespace Planet.Tests.PlayMode
         }
 
         [Test]
+        public void PanByScreenOffset_MovesPivotTowardOffset()
+        {
+            _cam.PanByScreenOffset(new Vector2(100f, 0f), 1f);
+            Assert.Greater(_cam.Pivot.x, 0f, "Смещение курсора вправо двигает камеру по +X.");
+            Assert.AreEqual(0f, _cam.Pivot.z, Eps);
+        }
+
+        [Test]
+        public void PanByScreenOffset_ClampsToMapBounds()
+        {
+            for (int i = 0; i < 2000; i++) _cam.PanByScreenOffset(new Vector2(100f, 0f), 1f);
+            Assert.AreEqual(MapExtent, _cam.Pivot.x, Eps, "СКМ-панорама не должна выводить за границу карты.");
+        }
+
+        [Test]
         public void Initialize_PlacesRigAboveAndBehindPivot()
         {
             // Камера должна стоять выше уровня земли и позади точки фокуса (отрицательный Z при yaw=0).

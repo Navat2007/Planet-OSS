@@ -21,6 +21,8 @@ namespace Planet.Game.Editor
         private const string PolygonScenePath = "Assets/_Project/Scenes/Polygon.unity";
         private const string ArtFolder = "Assets/_Project/Art";
         private const string GroundMaterialPath = ArtFolder + "/GroundMaterial.mat";
+        private const string CursorFolder = ArtFolder + "/Cursors";
+        private const string CursorTexturePath = CursorFolder + "/Cursor.png";
 
         private static readonly Color GroundColor = new Color(0.30f, 0.55f, 0.25f);
         private const float MapExtent = 50f; // половина стороны карты, м
@@ -63,8 +65,33 @@ namespace Planet.Game.Editor
             EnsureSun();
             EnsureGround();
             EnsureCamera();
+            EnsureCursor();
             EnsureEnvironmentRoot();
             EnsureGameRoot();
+        }
+
+        private static void EnsureCursor()
+        {
+            if (Object.FindFirstObjectByType<CursorController>() != null) return;
+
+            EnsureFolder(CursorFolder);
+            var go = new GameObject("Cursor");
+            var cc = go.AddComponent<CursorController>();
+
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(CursorTexturePath);
+            if (tex != null)
+            {
+                var so = new SerializedObject(cc);
+                so.FindProperty("_cursorTexture").objectReferenceValue = tex;
+                so.ApplyModifiedProperties();
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"[Planet] Текстура курсора не найдена. Положите PNG в {CursorTexturePath} " +
+                    "(Inspector → Texture Type = Cursor), затем переназначьте поле Cursor Texture " +
+                    "на объекте 'Cursor' или пересоберите сцену.");
+            }
         }
 
         private static void EnsureSun()

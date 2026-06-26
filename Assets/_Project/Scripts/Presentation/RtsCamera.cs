@@ -38,8 +38,16 @@ namespace Planet.Presentation
         [SerializeField] private float _maxDistance = 55f;
 
         [Header("Поворот")]
-        [SerializeField] private float _rotateSpeed = 90f;       // град/с
-        [SerializeField] private float _pitch = 50f;             // наклон камеры вниз
+        [SerializeField] private float _rotateSpeed = 90f;            // град/с (Q/E)
+        [Tooltip("Чувствительность поворота при зажатом Alt + движении мыши, град/пиксель.")]
+        [SerializeField] private float _mouseRotateSensitivity = 0.2f;
+        [SerializeField] private float _pitch = 50f;                 // наклон камеры вниз
+
+        [Header("СКМ — панорама с ускорением")]
+        [Tooltip("Зажать СКМ и вести мышь: камера ускоряется в сторону смещения курсора. Чем дальше увели мышь от точки нажатия — тем быстрее. Это множитель скорости.")]
+        [SerializeField] private float _mmbPanAcceleration = 0.08f;
+        [Tooltip("Мёртвая зона у точки нажатия СКМ, пиксели (чтобы лёгкое дрожание не двигало камеру).")]
+        [SerializeField] private float _mmbDeadZonePixels = 6f;
 
         [Header("Границы карты (XZ)")]
         [SerializeField] private Vector2 _mapMin = new Vector2(-50f, -50f);
@@ -50,6 +58,8 @@ namespace Planet.Presentation
         private float _targetDistance;  // целевое расстояние, к которому плавно идём
         private float _yaw;
         private bool _pointerActivated; // курсор хоть раз двигался — защита от старта в (0,0)
+        private Vector2 _mmbAnchor;     // точка нажатия СКМ
+        private bool _mmbActive;        // идёт ли СКМ-панорама
 
         public Vector3 Pivot => _pivot;
         public float Distance => _distance;
@@ -87,7 +97,9 @@ namespace Planet.Presentation
 
             float dt = Time.deltaTime;
             Pan(ReadMoveInput(), dt);
-            Rotate(ReadRotateInput(), dt);
+            MiddleMousePan(dt);           // СКМ: панорама с ускорением по смещению курсора
+            Rotate(ReadRotateInput(), dt);// Q/E
+            RotateByMouse();              // Alt + движение мыши
             Zoom(ReadZoomInput());        // меняет целевое расстояние
             UpdateZoomSmoothing(dt);      // плавно подтягивает текущее к целевому
             ApplyTransform();
@@ -102,6 +114,17 @@ namespace Planet.Presentation
             Vector3 forward = YawForward();
             Vector3 right = YawRight();
             _pivot += (right * input.x + forward * input.y) * (_panSpeed * dt);
+            _pivot = ClampToMap(_pivot);
+        }
+
+        /// <summary>
+        /// Панорама по экранному смещению курсора (СКМ): скорость пропорциональна величине
+        /// смещения, направление — к нему. offsetPixels: x — экранный вправо, y — экранный вверх.
+        /// </summary>
+        public void PanByScreenOffset(Vector2 offsetPixels, float dt)
+        {
+            Vector3 dir = YawRight() * offsetPixels.x + YawForward() * offsetPixels.y;
+            _pivot += dir * (_mmbPanAcceleration * dt);
             _pivot = ClampToMap(_pivot);
         }
 
@@ -184,6 +207,8 @@ namespace Planet.Presentation
             var mouse = Mouse.current;
             if (mouse == null) return Vector2.zero;
 
+            if (mouse.middleButton.isPressed) return Vector2.zero; // во время СКМ-панорамы край не скроллит
+
             if (!_pointerActivated)
             {
                 if (mouse.delta.ReadValue().sqrMagnitude > 0.01f) _pointerActivated = true;
@@ -210,6 +235,42 @@ namespace Planet.Presentation
             if (kb.eKey.isPressed) r += 1f;
             if (kb.qKey.isPressed) r -= 1f;
             return r;
+        }
+
+        /// <summary>Поворот зажатым Alt + движением мыши (в дополнение к Q/E).</summary>
+        private void RotateByMouse()
+        {
+            var kb = Keyboard.current;
+            var mouse = Mouse.current;
+            if (kb == null || mouse == null) return;
+            if (!kb.leftAltKey.isPressed && !kb.rightAltKey.isPressed) return;
+
+            float dx = mouse.delta.ReadValue().x; // пиксели за кадр
+            _yaw += dx * _mouseRotateSensitivity;
+        }
+
+        /// <summary>СКМ-панорама: зажал — ведёшь мышь — камера ускоряется в ту сторону.</summary>
+        private void MiddleMousePan(float dt)
+        {
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+
+            if (mouse.middleButton.wasPressedThisFrame)
+            {
+                _mmbAnchor = mouse.position.ReadValue();
+                _mmbActive = true;
+            }
+            if (!mouse.middleButton.isPressed)
+            {
+                _mmbActive = false;
+                return;
+            }
+            if (!_mmbActive) return;
+
+            Vector2 offset = mouse.position.ReadValue() - _mmbAnchor;
+            if (offset.magnitude < _mmbDeadZonePixels) return;
+
+            PanByScreenOffset(offset, dt);
         }
 
         private float ReadZoomInput()

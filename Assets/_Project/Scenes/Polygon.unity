@@ -203,11 +203,15 @@ MonoBehaviour:
   _panSpeed: 30
   _edgeScrollPixels: 64
   _edgeScrollEnabled: 1
-  _zoomSpeed: 400
+  _zoomStep: 4
+  _zoomLerpSpeed: 10
   _minDistance: 12
   _maxDistance: 55
   _rotateSpeed: 90
+  _mouseRotateSensitivity: 0.2
   _pitch: 50
+  _mmbPanAcceleration: 0.2
+  _mmbDeadZonePixels: 6
   _mapMin: {x: -50, y: -50}
   _mapMax: {x: 50, y: 50}
 --- !u!81 &93333755

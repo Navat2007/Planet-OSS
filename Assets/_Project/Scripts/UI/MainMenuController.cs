@@ -59,7 +59,7 @@ namespace Planet.UI
             scaler.referenceResolution = new Vector2(1920, 1080);
 
             CreateLabel(canvasGo.transform, "PLANET OSS", new Vector2(0, 320), 72);
-            CreateLabel(canvasGo.transform, "Eternal Sun — prototype", new Vector2(0, 250), 28);
+            CreateLabel(canvasGo.transform, "OUTER SPACE SUPREMACY — prototype", new Vector2(0, 250), 28);
 
             CreateButton(canvasGo.transform, "Одиночная игра", new Vector2(0, 120), true, OnSinglePlayer);
             CreateButton(canvasGo.transform, "Сетевая игра", new Vector2(0, 40), false, null);

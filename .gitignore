@@ -105,3 +105,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Claude Code личные настройки
+.claude/settings.local.json
+
+# IDE Rider/IntelliJ
+.idea/
