@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475a7ad6646d7f248aea3b0bac1a880a, type: 3}
+  m_Name: APC
+  m_EditorClassIdentifier: Planet.Game::Planet.Game.UnitDef
+  DisplayName: APC
+  Category: 1
+  MaxHp: 170
+  MoveSpeed: 3.2
+  AttackRange: 10
+  AttackDamage: 12
+  ReloadSeconds: 1.2
+  CollisionRadius: 1
+  SelectionRadius: 1.3
+  VisualPrefab: {fileID: 120574, guid: cb69247b0c7cd40c9b21d1ca3c59d031, type: 3}
+  VisualScale: 1
+  VisualYawOffset: 0

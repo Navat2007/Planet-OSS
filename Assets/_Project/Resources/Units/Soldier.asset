@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475a7ad6646d7f248aea3b0bac1a880a, type: 3}
+  m_Name: Soldier
+  m_EditorClassIdentifier: Planet.Game::Planet.Game.UnitDef
+  DisplayName: Soldier
+  Category: 0
+  MaxHp: 80
+  MoveSpeed: 3.5
+  AttackRange: 9
+  AttackDamage: 8
+  ReloadSeconds: 0.8
+  CollisionRadius: 0.4
+  SelectionRadius: 0.6
+  VisualPrefab: {fileID: 7895437735035860952, guid: 2346a620e95eee441abdb56337de9fa9, type: 3}
+  VisualScale: 1
+  VisualYawOffset: 0

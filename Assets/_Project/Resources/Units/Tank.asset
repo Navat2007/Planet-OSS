@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 475a7ad6646d7f248aea3b0bac1a880a, type: 3}
+  m_Name: Tank
+  m_EditorClassIdentifier: Planet.Game::Planet.Game.UnitDef
+  DisplayName: Tank
+  Category: 2
+  MaxHp: 320
+  MoveSpeed: 2.2
+  AttackRange: 14
+  AttackDamage: 30
+  ReloadSeconds: 2
+  CollisionRadius: 1.2
+  SelectionRadius: 1.6
+  VisualPrefab: {fileID: 126358, guid: ed6cdb9b3238c418eb164458c6f1a28b, type: 3}
+  VisualScale: 1
+  VisualYawOffset: 0
