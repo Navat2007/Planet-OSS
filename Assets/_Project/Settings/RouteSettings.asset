@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13ef0b463651b0a4f88a496a5e353854, type: 3}
+  m_Name: RouteSettings
+  m_EditorClassIdentifier: Planet.Presentation::Planet.Presentation.RouteSettings
+  Color: {r: 0.3, g: 0.95, b: 0.4, a: 1}
+  LineWidth: 0.09
+  LineAlpha: 0.5
+  FlagAlpha: 0.55
+  DashLength: 0.9
+  FreshGrace: 0.2

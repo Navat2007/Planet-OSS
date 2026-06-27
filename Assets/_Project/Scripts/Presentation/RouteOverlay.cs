@@ -14,7 +14,6 @@ namespace Planet.Presentation
     {
         private const float LineY = 0.08f; // приподнять линию над землёй
 
-        private GameplaySettings _s;
         private SelectionController _selection;
         private Camera _cam;
 
@@ -29,7 +28,6 @@ namespace Planet.Presentation
         public void Init(SelectionController selection)
         {
             _selection = selection;
-            _s = GameplaySettings.Instance;
             _cam = Camera.main;
         }
 
@@ -57,7 +55,7 @@ namespace Planet.Presentation
 
                 // Срезать пройденные точки по прогрессу sim — но только после grace-окна,
                 // иначе свежий приказ (команда ещё не исполнилась) обнулит маршрут.
-                if (now - v.RouteFreshTime > _s.RouteFreshGrace)
+                if (now - v.RouteFreshTime > GameSettings.Route.FreshGrace)
                 {
                     int simLegs = (v.Entity.HasTarget ? 1 : 0) + v.Entity.Waypoints.Count;
                     while (pts.Count > simLegs && pts.Count > 0) pts.RemoveAt(0);
@@ -87,7 +85,7 @@ namespace Planet.Presentation
                     lr.positionCount = n;
                     lr.SetPositions(_posBuffer);
                     float len = PathLength(n);
-                    lr.material.mainTextureScale = new Vector2(Mathf.Max(1f, len / _s.RouteDashLength), 1f);
+                    lr.material.mainTextureScale = new Vector2(Mathf.Max(1f, len / GameSettings.Route.DashLength), 1f);
                 }
             }
 
@@ -133,7 +131,7 @@ namespace Planet.Presentation
             lr.alignment = LineAlignment.View;
             lr.textureMode = LineTextureMode.Stretch;
             lr.numCornerVertices = 2;
-            lr.widthMultiplier = _s.RouteLineWidth;
+            lr.widthMultiplier = GameSettings.Route.LineWidth;
             lr.shadowCastingMode = ShadowCastingMode.Off;
             lr.receiveShadows = false;
             lr.material = new Material(LineTemplate); // свой инстанс — тайлинг у каждой линии свой
@@ -185,9 +183,9 @@ namespace Planet.Presentation
                 if (_lineTemplate != null) return _lineTemplate;
                 Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
                 if (sh == null) sh = Shader.Find("Sprites/Default");
-                var rc = GameplaySettings.Instance.RouteColor;
+                var rc = GameSettings.Route.Color;
                 _lineTemplate = MakeTransparent(new Material(sh),
-                    new Color(rc.r, rc.g, rc.b, GameplaySettings.Instance.RouteLineAlpha));
+                    new Color(rc.r, rc.g, rc.b, GameSettings.Route.LineAlpha));
 
                 Texture2D dash = MakeDashTexture();
                 if (_lineTemplate.HasProperty("_BaseMap")) _lineTemplate.SetTexture("_BaseMap", dash);
@@ -203,9 +201,9 @@ namespace Planet.Presentation
                 if (_flagMat != null) return _flagMat;
                 Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
                 if (sh == null) sh = Shader.Find("Sprites/Default");
-                var rc = GameplaySettings.Instance.RouteColor;
+                var rc = GameSettings.Route.Color;
                 _flagMat = MakeTransparent(new Material(sh),
-                    new Color(rc.r, rc.g, rc.b, GameplaySettings.Instance.RouteFlagAlpha));
+                    new Color(rc.r, rc.g, rc.b, GameSettings.Route.FlagAlpha));
                 return _flagMat;
             }
         }

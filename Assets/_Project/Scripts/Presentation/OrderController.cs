@@ -11,14 +11,13 @@ namespace Planet.Presentation
     ///  - зажать ПКМ и тянуть — задать направление (facing), показывается призрак-превью;
     ///  - Shift+ПКМ — добавить точку в очередь маршрута (waypoints);
     ///  - Shift + зажать ПКМ и вести — рисовать маршрут: точка в очередь каждые PaintInterval
-    ///    секунд, если курсор сместился не меньше чем на PaintMinDistance (см. GameplaySettings).
+    ///    секунд, если курсор сместился не меньше чем на PaintMinDistance (см. OrderSettings).
     /// Приказ оформляется как детерминированная команда (готово к lockstep).
     /// </summary>
     public sealed class OrderController : MonoBehaviour
     {
         [SerializeField] private int _localOwnerId = 0;
 
-        private GameplaySettings _s;
         private Camera _cam;
         private SimRunner _runner;
         private SelectionController _selection;
@@ -37,7 +36,6 @@ namespace Planet.Presentation
         {
             _runner = runner;
             _selection = selection;
-            _s = GameplaySettings.Instance;
             _cam = Camera.main;
             _ghost = new GameObject("GhostPreview").AddComponent<GhostPreview>();
         }
@@ -71,11 +69,11 @@ namespace Planet.Presentation
                 if (_painting)
                 {
                     _paintTimer += Time.deltaTime;
-                    if (_paintTimer >= _s.PaintInterval)
+                    if (_paintTimer >= GameSettings.Order.PaintInterval)
                     {
                         _paintTimer = 0f;
                         Vector3 m = cur - _lastPaintPoint; m.y = 0f;
-                        if (m.magnitude >= _s.PaintMinDistance) // только если курсор сместился
+                        if (m.magnitude >= GameSettings.Order.PaintMinDistance) // только если курсор сместился
                         {
                             IssueMove(cur, queue: true, facingWorld: Vector3.zero, marker: false);
                             _lastPaintPoint = cur;
@@ -86,7 +84,7 @@ namespace Planet.Presentation
                 {
                     Vector3 d = cur - _pressGround;
                     d.y = 0f;
-                    if (!_facing && d.magnitude > _s.FacingDragMeters)
+                    if (!_facing && d.magnitude > GameSettings.Order.FacingDragMeters)
                     {
                         _facing = true;
                         _ghost.Begin(SelectedViews()); // клоны моделей под текущее выделение — один раз
@@ -106,7 +104,7 @@ namespace Planet.Presentation
                     if (TryGroundPoint(screen, out Vector3 rel))
                     {
                         Vector3 m = rel - _lastPaintPoint; m.y = 0f;
-                        if (m.magnitude >= _s.PaintMinDistance)
+                        if (m.magnitude >= GameSettings.Order.PaintMinDistance)
                             IssueMove(rel, queue: true, facingWorld: Vector3.zero, marker: false);
                     }
                     _painting = false;

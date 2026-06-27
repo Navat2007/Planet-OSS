@@ -14,10 +14,21 @@ namespace Planet.Game
         [Header("Симуляция")]
         [SerializeField] private uint _seed = 12345;
 
+        [Header("Настройки презентации (ассеты в _Project/Settings)")]
+        [SerializeField] private SelectionSettings _selectionSettings;
+        [SerializeField] private HealthBarSettings _healthBarSettings;
+        [SerializeField] private MoveMarkerSettings _markerSettings;
+        [SerializeField] private RouteSettings _routeSettings;
+        [SerializeField] private GhostSettings _ghostSettings;
+        [SerializeField] private OrderSettings _orderSettings;
+
         private SimRunner _runner;
 
         private void Start()
         {
+            GameSettings.Configure(_selectionSettings, _healthBarSettings, _markerSettings,
+                _routeSettings, _ghostSettings, _orderSettings);
+
             _runner = gameObject.AddComponent<SimRunner>();
             _runner.Initialize(_seed);
 

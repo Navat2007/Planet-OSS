@@ -109,7 +109,7 @@ namespace Planet.Presentation
                 _mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
                 _mat.renderQueue = (int)RenderQueue.Transparent;
 
-                var c = GameplaySettings.Instance.GhostColor; // голограмма (цвет из настроек)
+                var c = GameSettings.Ghost.Color; // голограмма (цвет из настроек)
                 if (_mat.HasProperty("_BaseColor")) _mat.SetColor("_BaseColor", c);
                 if (_mat.HasProperty("_Color")) _mat.SetColor("_Color", c);
                 return _mat;

@@ -164,6 +164,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _seed: 12345
+  _selectionSettings: {fileID: 11400000, guid: 968cd4ac8f6eb774e9679d7c76b30aa8, type: 2}
+  _healthBarSettings: {fileID: 11400000, guid: 85166427d6b0f964a8f4bb47aa2532f2, type: 2}
+  _markerSettings: {fileID: 11400000, guid: 9dd73a92ef1363d478d7c834b9d98e96, type: 2}
+  _routeSettings: {fileID: 11400000, guid: 17cb644b731bfb440a08374d0928cd50, type: 2}
+  _ghostSettings: {fileID: 11400000, guid: 62b861c9777620544a6d7e65ff0df270, type: 2}
+  _orderSettings: {fileID: 11400000, guid: f154251c75901e648b71472c8c2ac232, type: 2}
 --- !u!1 &634066477
 GameObject:
   m_ObjectHideFlags: 0

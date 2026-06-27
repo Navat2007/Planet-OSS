@@ -11,7 +11,7 @@ namespace Planet.Presentation
 
         public static void Spawn(Vector3 world)
         {
-            var s = GameplaySettings.Instance;
+            var s = GameSettings.Marker;
 
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "MoveMarker";
@@ -19,17 +19,17 @@ namespace Planet.Presentation
             if (col != null) Destroy(col);
 
             go.transform.position = world + Vector3.up * 0.05f;
-            go.transform.localScale = new Vector3(s.MarkerStartSize, 0.02f, s.MarkerStartSize);
+            go.transform.localScale = new Vector3(s.StartSize, 0.02f, s.StartSize);
 
             var r = go.GetComponent<Renderer>();
-            var c = s.MarkerColor;
+            var c = s.Color;
             if (r.material.HasProperty("_BaseColor")) r.material.SetColor("_BaseColor", c);
             if (r.material.HasProperty("_Color")) r.material.SetColor("_Color", c);
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
             var marker = go.AddComponent<MoveMarker>();
-            marker._life = s.MarkerLife;
-            marker._startSize = s.MarkerStartSize;
+            marker._life = s.Life;
+            marker._startSize = s.StartSize;
         }
 
         private void Update()

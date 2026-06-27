@@ -25,7 +25,6 @@ namespace Planet.Game.Editor
         private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
         private const string ResourcesFolder = "Assets/_Project/Resources";
         private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
-        private const string GameplaySettingsPath = ResourcesFolder + "/GameplaySettings.asset";
         private const string MenuCoverFolder = ResourcesFolder + "/UI";
         private const string MenuCoverPath = MenuCoverFolder + "/MainMenuCover.png";
         private const string SettingsFolder = "Assets/_Project/Settings";
@@ -61,6 +60,7 @@ namespace Planet.Game.Editor
             SetupRtsLevel(scene);
             EnsureCursorSettings();
             EnsureGameplaySettings();
+            WireSettingsToBootstrap();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, PolygonScenePath);
@@ -76,6 +76,7 @@ namespace Planet.Game.Editor
             SetupRtsLevel(scene);
             EnsureCursorSettings();
             EnsureGameplaySettings();
+            WireSettingsToBootstrap();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("[Planet] Активная сцена настроена как RTS-уровень. Не забудьте сохранить (Ctrl+S).");
         }
@@ -140,18 +141,53 @@ namespace Planet.Game.Editor
         public static void CreateGameplaySettingsMenu()
         {
             EnsureGameplaySettings();
+            WireSettingsToBootstrap();
             AssetDatabase.SaveAssets();
-            var settings = AssetDatabase.LoadAssetAtPath<GameplaySettings>(GameplaySettingsPath);
-            if (settings != null) Selection.activeObject = settings;
+            var sel = AssetDatabase.LoadAssetAtPath<SelectionSettings>($"{SettingsFolder}/SelectionSettings.asset");
+            if (sel != null) Selection.activeObject = sel;
         }
 
-        /// <summary>Создать (если нет) единый ассет настроек презентации в Resources.</summary>
+        /// <summary>Создать (если нет) отдельные ассеты настроек презентации в Settings/.</summary>
         private static void EnsureGameplaySettings()
         {
-            if (AssetDatabase.LoadAssetAtPath<GameplaySettings>(GameplaySettingsPath) != null) return;
-            EnsureFolder(ResourcesFolder);
-            var settings = ScriptableObject.CreateInstance<GameplaySettings>();
-            AssetDatabase.CreateAsset(settings, GameplaySettingsPath);
+            EnsureFolder(SettingsFolder);
+            EnsureSettingsAsset<SelectionSettings>("SelectionSettings");
+            EnsureSettingsAsset<HealthBarSettings>("HealthBarSettings");
+            EnsureSettingsAsset<MoveMarkerSettings>("MoveMarkerSettings");
+            EnsureSettingsAsset<RouteSettings>("RouteSettings");
+            EnsureSettingsAsset<GhostSettings>("GhostSettings");
+            EnsureSettingsAsset<OrderSettings>("OrderSettings");
+        }
+
+        private static void EnsureSettingsAsset<T>(string assetName) where T : ScriptableObject
+        {
+            string path = $"{SettingsFolder}/{assetName}.asset";
+            if (AssetDatabase.LoadAssetAtPath<T>(path) != null) return;
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<T>(), path);
+        }
+
+        /// <summary>Прописать ссылки на ассеты настроек в PolygonBootstrap открытой сцены.</summary>
+        private static void WireSettingsToBootstrap()
+        {
+            var bootstrap = Object.FindFirstObjectByType<PolygonBootstrap>();
+            if (bootstrap == null) return;
+
+            var so = new SerializedObject(bootstrap);
+            SetSettingsRef(so, "_selectionSettings", "SelectionSettings");
+            SetSettingsRef(so, "_healthBarSettings", "HealthBarSettings");
+            SetSettingsRef(so, "_markerSettings", "MoveMarkerSettings");
+            SetSettingsRef(so, "_routeSettings", "RouteSettings");
+            SetSettingsRef(so, "_ghostSettings", "GhostSettings");
+            SetSettingsRef(so, "_orderSettings", "OrderSettings");
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorSceneManager.MarkSceneDirty(bootstrap.gameObject.scene);
+        }
+
+        private static void SetSettingsRef(SerializedObject so, string property, string assetName)
+        {
+            var prop = so.FindProperty(property);
+            if (prop == null) return;
+            prop.objectReferenceValue = AssetDatabase.LoadAssetAtPath<ScriptableObject>($"{SettingsFolder}/{assetName}.asset");
         }
 
         /// <summary>

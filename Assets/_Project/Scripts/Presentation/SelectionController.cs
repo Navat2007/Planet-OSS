@@ -15,7 +15,6 @@ namespace Planet.Presentation
     {
         [SerializeField] private int _localOwnerId = 0;
 
-        private GameplaySettings _s;
         private Camera _cam;
         private readonly HashSet<UnitView> _selected = new HashSet<UnitView>();
         private readonly List<UnitView> _selectionScratch = new List<UnitView>();
@@ -27,11 +26,7 @@ namespace Planet.Presentation
 
         public IReadOnlyCollection<UnitView> Selected => _selected;
 
-        private void Awake()
-        {
-            _cam = Camera.main;
-            _s = GameplaySettings.Instance;
-        }
+        private void Awake() => _cam = Camera.main;
 
         private void Update()
         {
@@ -57,7 +52,7 @@ namespace Planet.Presentation
                 _isBox = false;
             }
 
-            if (_dragging && !_isBox && (pos - _dragStart).magnitude > _s.DragStartThreshold)
+            if (_dragging && !_isBox && (pos - _dragStart).magnitude > GameSettings.Selection.DragStartThreshold)
                 _isBox = true;
 
             if (_dragging && mouse.leftButton.wasReleasedThisFrame)
@@ -74,7 +69,7 @@ namespace Planet.Presentation
             UnitView hit = PickNearest(screenPos);
 
             bool isDouble = hit != null && hit == _lastClicked &&
-                            (Time.unscaledTime - _lastClickTime) <= _s.DoubleClickTime;
+                            (Time.unscaledTime - _lastClickTime) <= GameSettings.Selection.DoubleClickTime;
             _lastClickTime = Time.unscaledTime;
             _lastClicked = hit;
 
@@ -124,7 +119,7 @@ namespace Planet.Presentation
                 if (!IsSelectable(v)) continue;
                 if (!ScreenFootprint(v, out Rect footprint, out Vector2 center)) continue;
 
-                float radiusPixels = Mathf.Max(_s.ClickPixelThreshold, Mathf.Max(footprint.width, footprint.height) * 0.5f);
+                float radiusPixels = Mathf.Max(GameSettings.Selection.ClickPixelThreshold, Mathf.Max(footprint.width, footprint.height) * 0.5f);
                 float distance = (center - screenPos).magnitude;
                 if (!footprint.Contains(screenPos) && distance > radiusPixels) continue;
 
@@ -243,7 +238,7 @@ namespace Planet.Presentation
             float x1 = Mathf.Max(_dragStart.x, cur.x);
             float y0 = Screen.height - Mathf.Max(_dragStart.y, cur.y); // экран→GUI (инверсия Y)
             float y1 = Screen.height - Mathf.Min(_dragStart.y, cur.y);
-            DrawRectOutline(new Rect(x0, y0, x1 - x0, y1 - y0), _s.SelectionBoxColor, _s.SelectionBoxThickness);
+            DrawRectOutline(new Rect(x0, y0, x1 - x0, y1 - y0), GameSettings.Selection.BoxColor, GameSettings.Selection.BoxThickness);
         }
 
         private static void DrawRectOutline(Rect r, Color c, float t)
