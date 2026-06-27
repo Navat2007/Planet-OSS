@@ -9,14 +9,16 @@ namespace Planet.Presentation
     /// Приказы движения (Фаза 5):
     ///  - ПКМ-клик по земле — движение выделенных в точку (строем);
     ///  - зажать ПКМ и тянуть — задать направление (facing), показывается призрак-превью;
-    ///  - Shift+ПКМ — добавить точку в очередь маршрута (waypoints).
+    ///  - Shift+ПКМ — добавить точку в очередь маршрута (waypoints);
+    ///  - Shift + зажать ПКМ и вести — рисовать маршрут: точка в очередь каждые PaintInterval
+    ///    секунд, если курсор сместился не меньше чем на PaintMinDistance (см. GameplaySettings).
     /// Приказ оформляется как детерминированная команда (готово к lockstep).
     /// </summary>
     public sealed class OrderController : MonoBehaviour
     {
         [SerializeField] private int _localOwnerId = 0;
-        [SerializeField] private float _facingDragMeters = 1.2f;
 
+        private GameplaySettings _s;
         private Camera _cam;
         private SimRunner _runner;
         private SelectionController _selection;
@@ -24,7 +26,10 @@ namespace Planet.Presentation
 
         private bool _rmbDown;
         private bool _facing;
+        private bool _painting;       // режим рисования маршрута (Shift на нажатии ПКМ)
+        private float _paintTimer;
         private Vector3 _pressGround;
+        private Vector3 _lastPaintPoint;
 
         private readonly List<UnitView> _tmpViews = new List<UnitView>();
 
@@ -32,6 +37,7 @@ namespace Planet.Presentation
         {
             _runner = runner;
             _selection = selection;
+            _s = GameplaySettings.Instance;
             _cam = Camera.main;
             _ghost = new GameObject("GhostPreview").AddComponent<GhostPreview>();
         }
@@ -49,18 +55,44 @@ namespace Planet.Presentation
                 _pressGround = press;
                 _rmbDown = true;
                 _facing = false;
+                _painting = IsShiftHeld(); // режим решается на нажатии: Shift → рисуем маршрут
+
+                if (_painting)
+                {
+                    // первый сегмент маршрута — в очередь (как обычный Shift+ПКМ)
+                    IssueMove(press, queue: true, facingWorld: Vector3.zero, marker: false);
+                    _lastPaintPoint = press;
+                    _paintTimer = 0f;
+                }
             }
 
             if (_rmbDown && mouse.rightButton.isPressed && TryGroundPoint(screen, out Vector3 cur))
             {
-                Vector3 d = cur - _pressGround;
-                d.y = 0f;
-                if (!_facing && d.magnitude > _facingDragMeters)
+                if (_painting)
                 {
-                    _facing = true;
-                    _ghost.Begin(SelectedViews()); // клоны моделей под текущее выделение — один раз
+                    _paintTimer += Time.deltaTime;
+                    if (_paintTimer >= _s.PaintInterval)
+                    {
+                        _paintTimer = 0f;
+                        Vector3 m = cur - _lastPaintPoint; m.y = 0f;
+                        if (m.magnitude >= _s.PaintMinDistance) // только если курсор сместился
+                        {
+                            IssueMove(cur, queue: true, facingWorld: Vector3.zero, marker: false);
+                            _lastPaintPoint = cur;
+                        }
+                    }
                 }
-                if (_facing) _ghost.UpdatePose(_pressGround, d);
+                else
+                {
+                    Vector3 d = cur - _pressGround;
+                    d.y = 0f;
+                    if (!_facing && d.magnitude > _s.FacingDragMeters)
+                    {
+                        _facing = true;
+                        _ghost.Begin(SelectedViews()); // клоны моделей под текущее выделение — один раз
+                    }
+                    if (_facing) _ghost.UpdatePose(_pressGround, d);
+                }
             }
 
             if (_rmbDown && mouse.rightButton.wasReleasedThisFrame)
@@ -68,13 +100,27 @@ namespace Planet.Presentation
                 _rmbDown = false;
                 _ghost.Hide();
 
-                Vector3 facingWorld = Vector3.zero;
-                if (_facing && TryGroundPoint(screen, out Vector3 rel))
+                if (_painting)
                 {
-                    facingWorld = rel - _pressGround;
-                    facingWorld.y = 0f;
+                    // финальная точка маршрута, если сместились от последней
+                    if (TryGroundPoint(screen, out Vector3 rel))
+                    {
+                        Vector3 m = rel - _lastPaintPoint; m.y = 0f;
+                        if (m.magnitude >= _s.PaintMinDistance)
+                            IssueMove(rel, queue: true, facingWorld: Vector3.zero, marker: false);
+                    }
+                    _painting = false;
                 }
-                IssueMove(_pressGround, IsShiftHeld(), facingWorld);
+                else
+                {
+                    Vector3 facingWorld = Vector3.zero;
+                    if (_facing && TryGroundPoint(screen, out Vector3 rel))
+                    {
+                        facingWorld = rel - _pressGround;
+                        facingWorld.y = 0f;
+                    }
+                    IssueMove(_pressGround, queue: false, facingWorld);
+                }
             }
         }
 
@@ -96,7 +142,7 @@ namespace Planet.Presentation
             return false;
         }
 
-        private void IssueMove(Vector3 world, bool queue, Vector3 facingWorld)
+        private void IssueMove(Vector3 world, bool queue, Vector3 facingWorld, bool marker = true)
         {
             var views = SelectedViews();
             if (views.Count == 0) return;
@@ -115,7 +161,7 @@ namespace Planet.Presentation
 
             _runner.Schedule.Add(_runner.World.CurrentTick + 1,
                 new MoveOrderCommand(_localOwnerId, ids, target, queue, facing));
-            MoveMarker.Spawn(world);
+            if (marker) MoveMarker.Spawn(world);
         }
 
         private IReadOnlyList<UnitView> SelectedViews()

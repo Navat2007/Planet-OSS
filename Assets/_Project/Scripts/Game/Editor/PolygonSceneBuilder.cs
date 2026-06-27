@@ -25,6 +25,7 @@ namespace Planet.Game.Editor
         private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
         private const string ResourcesFolder = "Assets/_Project/Resources";
         private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
+        private const string GameplaySettingsPath = ResourcesFolder + "/GameplaySettings.asset";
         private const string MenuCoverFolder = ResourcesFolder + "/UI";
         private const string MenuCoverPath = MenuCoverFolder + "/MainMenuCover.png";
         private const string SettingsFolder = "Assets/_Project/Settings";
@@ -59,6 +60,7 @@ namespace Planet.Game.Editor
 
             SetupRtsLevel(scene);
             EnsureCursorSettings();
+            EnsureGameplaySettings();
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, PolygonScenePath);
@@ -73,6 +75,7 @@ namespace Planet.Game.Editor
             Scene scene = SceneManager.GetActiveScene();
             SetupRtsLevel(scene);
             EnsureCursorSettings();
+            EnsureGameplaySettings();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log("[Planet] Активная сцена настроена как RTS-уровень. Не забудьте сохранить (Ctrl+S).");
         }
@@ -131,6 +134,24 @@ namespace Planet.Game.Editor
             AssetDatabase.SaveAssets();
             var settings = AssetDatabase.LoadAssetAtPath<CursorSettings>(CursorSettingsPath);
             if (settings != null) Selection.activeObject = settings;
+        }
+
+        [MenuItem("Planet/Setup/Create Gameplay Settings")]
+        public static void CreateGameplaySettingsMenu()
+        {
+            EnsureGameplaySettings();
+            AssetDatabase.SaveAssets();
+            var settings = AssetDatabase.LoadAssetAtPath<GameplaySettings>(GameplaySettingsPath);
+            if (settings != null) Selection.activeObject = settings;
+        }
+
+        /// <summary>Создать (если нет) единый ассет настроек презентации в Resources.</summary>
+        private static void EnsureGameplaySettings()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameplaySettings>(GameplaySettingsPath) != null) return;
+            EnsureFolder(ResourcesFolder);
+            var settings = ScriptableObject.CreateInstance<GameplaySettings>();
+            AssetDatabase.CreateAsset(settings, GameplaySettingsPath);
         }
 
         /// <summary>

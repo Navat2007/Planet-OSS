@@ -117,15 +117,16 @@ namespace Planet.Presentation
             _fillRenderer.enabled = v;
         }
 
-        private static Material OutlineMat => _outlineMat != null ? _outlineMat : (_outlineMat = MakeUnlit(new Color(1f, 1f, 1f, 1f)));
-        private static Material BgMat => _bgMat != null ? _bgMat : (_bgMat = MakeUnlit(new Color(0f, 0f, 0f, 1f)));
-        private static Material FillMat => _fillMat != null ? _fillMat : (_fillMat = MakeUnlit(new Color(0.2f, 1f, 0.08f, 1f)));
+        private static Material OutlineMat => _outlineMat != null ? _outlineMat : (_outlineMat = MakeUnlit(GameplaySettings.Instance.HpOutline));
+        private static Material BgMat => _bgMat != null ? _bgMat : (_bgMat = MakeUnlit(GameplaySettings.Instance.HpBackground));
+        private static Material FillMat => _fillMat != null ? _fillMat : (_fillMat = MakeUnlit(GameplaySettings.Instance.HpColorFull));
 
         private static Color HealthColor(float frac)
         {
-            if (frac <= 0.25f) return new Color(1f, 0.08f, 0.04f, 1f);
-            if (frac <= 0.55f) return new Color(1f, 0.82f, 0.05f, 1f);
-            return new Color(0.2f, 1f, 0.08f, 1f);
+            var s = GameplaySettings.Instance;
+            if (frac <= s.HpLowThreshold) return s.HpColorLow;
+            if (frac <= s.HpMidThreshold) return s.HpColorMid;
+            return s.HpColorFull;
         }
 
         private static Material MakeUnlit(Color c)

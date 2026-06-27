@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b69ca90b661024438c2dc9af617b336, type: 3}
+  m_Name: GameplaySettings
+  m_EditorClassIdentifier: Planet.Presentation::Planet.Presentation.GameplaySettings
+  SelectionBoxColor: {r: 0.3, g: 1, b: 0.4, a: 1}
+  SelectionBoxThickness: 2
+  ClickPixelThreshold: 35
+  DragStartThreshold: 8
+  DoubleClickTime: 0.3
+  HpColorFull: {r: 0.2, g: 1, b: 0.08, a: 1}
+  HpColorMid: {r: 1, g: 0.82, b: 0.05, a: 1}
+  HpColorLow: {r: 1, g: 0.08, b: 0.04, a: 1}
+  HpBackground: {r: 0, g: 0, b: 0, a: 1}
+  HpOutline: {r: 1, g: 1, b: 1, a: 1}
+  HpMidThreshold: 0.55
+  HpLowThreshold: 0.25
+  MarkerColor: {r: 0.3, g: 1, b: 0.4, a: 1}
+  MarkerStartSize: 1.4
+  MarkerLife: 0.5
+  RouteColor: {r: 0.3, g: 0.95, b: 0.4, a: 1}
+  RouteLineWidth: 0.09
+  RouteLineAlpha: 0.5
+  RouteFlagAlpha: 0.55
+  RouteDashLength: 0.9
+  RouteFreshGrace: 0.2
+  GhostColor: {r: 0.45, g: 0.85, b: 1, a: 0.45}
+  FacingDragMeters: 1.2
+  PaintInterval: 0.1
+  PaintMinDistance: 1

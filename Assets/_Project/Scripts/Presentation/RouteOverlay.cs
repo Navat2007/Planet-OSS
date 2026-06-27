@@ -12,13 +12,9 @@ namespace Planet.Presentation
     /// </summary>
     public sealed class RouteOverlay : MonoBehaviour
     {
-        private const float LineY = 0.08f;           // приподнять линию над землёй
-        private const float DashWorldPerTile = 0.9f; // длина одного цикла «штрих+пробел», м
-        private const float LineWidth = 0.09f;
-        private const float FreshGrace = 0.2f;       // пока приказ «свежий», точки не срезаем (лаг команды)
+        private const float LineY = 0.08f; // приподнять линию над землёй
 
-        private static readonly Color RouteGreen = new Color(0.30f, 0.95f, 0.40f, 1f);
-
+        private GameplaySettings _s;
         private SelectionController _selection;
         private Camera _cam;
 
@@ -33,6 +29,7 @@ namespace Planet.Presentation
         public void Init(SelectionController selection)
         {
             _selection = selection;
+            _s = GameplaySettings.Instance;
             _cam = Camera.main;
         }
 
@@ -60,7 +57,7 @@ namespace Planet.Presentation
 
                 // Срезать пройденные точки по прогрессу sim — но только после grace-окна,
                 // иначе свежий приказ (команда ещё не исполнилась) обнулит маршрут.
-                if (now - v.RouteFreshTime > FreshGrace)
+                if (now - v.RouteFreshTime > _s.RouteFreshGrace)
                 {
                     int simLegs = (v.Entity.HasTarget ? 1 : 0) + v.Entity.Waypoints.Count;
                     while (pts.Count > simLegs && pts.Count > 0) pts.RemoveAt(0);
@@ -90,7 +87,7 @@ namespace Planet.Presentation
                     lr.positionCount = n;
                     lr.SetPositions(_posBuffer);
                     float len = PathLength(n);
-                    lr.material.mainTextureScale = new Vector2(Mathf.Max(1f, len / DashWorldPerTile), 1f);
+                    lr.material.mainTextureScale = new Vector2(Mathf.Max(1f, len / _s.RouteDashLength), 1f);
                 }
             }
 
@@ -136,7 +133,7 @@ namespace Planet.Presentation
             lr.alignment = LineAlignment.View;
             lr.textureMode = LineTextureMode.Stretch;
             lr.numCornerVertices = 2;
-            lr.widthMultiplier = LineWidth;
+            lr.widthMultiplier = _s.RouteLineWidth;
             lr.shadowCastingMode = ShadowCastingMode.Off;
             lr.receiveShadows = false;
             lr.material = new Material(LineTemplate); // свой инстанс — тайлинг у каждой линии свой
@@ -188,7 +185,9 @@ namespace Planet.Presentation
                 if (_lineTemplate != null) return _lineTemplate;
                 Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
                 if (sh == null) sh = Shader.Find("Sprites/Default");
-                _lineTemplate = MakeTransparent(new Material(sh), new Color(RouteGreen.r, RouteGreen.g, RouteGreen.b, 0.5f));
+                var rc = GameplaySettings.Instance.RouteColor;
+                _lineTemplate = MakeTransparent(new Material(sh),
+                    new Color(rc.r, rc.g, rc.b, GameplaySettings.Instance.RouteLineAlpha));
 
                 Texture2D dash = MakeDashTexture();
                 if (_lineTemplate.HasProperty("_BaseMap")) _lineTemplate.SetTexture("_BaseMap", dash);
@@ -204,7 +203,9 @@ namespace Planet.Presentation
                 if (_flagMat != null) return _flagMat;
                 Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
                 if (sh == null) sh = Shader.Find("Sprites/Default");
-                _flagMat = MakeTransparent(new Material(sh), new Color(RouteGreen.r, RouteGreen.g, RouteGreen.b, 0.55f));
+                var rc = GameplaySettings.Instance.RouteColor;
+                _flagMat = MakeTransparent(new Material(sh),
+                    new Color(rc.r, rc.g, rc.b, GameplaySettings.Instance.RouteFlagAlpha));
                 return _flagMat;
             }
         }
