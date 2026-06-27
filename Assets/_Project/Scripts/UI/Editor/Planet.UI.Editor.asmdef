@@ -1,0 +1,21 @@
+{
+    "name": "Planet.UI.Editor",
+    "rootNamespace": "Planet.UI.Editor",
+    "references": [
+        "Planet.UI",
+        "Planet.Game",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -25,6 +25,8 @@ namespace Planet.Game.Editor
         private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
         private const string ResourcesFolder = "Assets/_Project/Resources";
         private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
+        private const string MenuCoverFolder = ResourcesFolder + "/UI";
+        private const string MenuCoverPath = MenuCoverFolder + "/MainMenuCover.png";
         private const string SettingsFolder = "Assets/_Project/Settings";
         private const string CameraSettingsPath = SettingsFolder + "/CameraSettings.asset";
         private const string PrefabsFolder = "Assets/_Project/Prefabs";
@@ -83,6 +85,25 @@ namespace Planet.Game.Editor
             EnsureCamera();
             EnsureEnvironmentRoot();
             EnsureGameRoot();
+        }
+
+        [MenuItem("Planet/Setup/Setup Menu Cover")]
+        public static void SetupMenuCover()
+        {
+            EnsureFolder(MenuCoverFolder);
+            if (AssetImporter.GetAtPath(MenuCoverPath) is not TextureImporter importer)
+            {
+                Debug.LogWarning($"[Planet] Картинка обложки не найдена. Положи PNG в {MenuCoverPath} и повтори пункт меню.");
+                return;
+            }
+
+            bool changed = false;
+            if (importer.textureType != TextureImporterType.Sprite) { importer.textureType = TextureImporterType.Sprite; changed = true; }
+            if (changed) importer.SaveAndReimport();
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(MenuCoverPath);
+            if (sprite != null) { Selection.activeObject = sprite; Debug.Log($"[Planet] Обложка меню готова: {MenuCoverPath}"); }
+            else Debug.LogWarning("[Planet] Не удалось загрузить обложку как Sprite.");
         }
 
         [MenuItem("Planet/Setup/Create Cursor Settings")]
