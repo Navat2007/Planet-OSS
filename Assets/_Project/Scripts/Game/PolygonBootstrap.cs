@@ -27,7 +27,9 @@ namespace Planet.Game
             var panel = gameObject.AddComponent<DebugSpawnPanel>();
             panel.Init(spawner);
 
-            gameObject.AddComponent<SelectionController>();
+            var selection = gameObject.AddComponent<SelectionController>();
+            var order = gameObject.AddComponent<OrderController>();
+            order.Init(_runner, selection);
 
             CenterCameraOnPlayerSpawn();
         }

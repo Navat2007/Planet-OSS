@@ -54,6 +54,7 @@ namespace Planet.Game
             int radius = def.CollisionRadiusSim;
             SimVector2 pos = SimPlacement.FindFreeSpot(_runner.World, center, radius, SpawnGap);
             SimEntity e = _runner.World.Spawn(ownerId, pos, def.MaxHp, def.SpeedPerTick, def.AttackRangeSim, radius);
+            e.ReverseDistance = def.ReverseDistanceSim;
 
             var root = new GameObject($"{def.DisplayName}_{ownerId}_{e.Id}");
             if (def.VisualPrefab != null)

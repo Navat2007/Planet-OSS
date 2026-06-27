@@ -21,6 +21,7 @@ MonoBehaviour:
   ReloadSeconds: 2
   CollisionRadius: 1.2
   SelectionRadius: 1.6
+  ReverseDistance: 9
   VisualPrefab: {fileID: 126358, guid: ed6cdb9b3238c418eb164458c6f1a28b, type: 3}
   VisualScale: 1
   VisualYawOffset: 0

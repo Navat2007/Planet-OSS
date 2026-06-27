@@ -12,7 +12,11 @@ namespace Planet.Presentation
     /// </summary>
     public sealed class HealthBar : MonoBehaviour
     {
-        private const float BarHeight = 0.14f;
+        private const float BarHeight = 0.06f;
+        private const float BackgroundHeight = 0.16f;
+        private const float OutlinePaddingX = 0.06f;
+        private const float OutlinePaddingY = 0.035f;
+        private const float FillInsetX = 0.12f;
 
         private SimEntity _entity;
         private float _width;
@@ -28,6 +32,9 @@ namespace Planet.Presentation
         private static Material _outlineMat;
         private static Material _bgMat;
         private static Material _fillMat;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private MaterialPropertyBlock _fillProps;
 
         public void Setup(SimEntity entity, float width, float heightOffset)
         {
@@ -35,10 +42,17 @@ namespace Planet.Presentation
             _width = width;
             _heightOffset = heightOffset;
             _cam = Camera.main;
+            _fillProps = new MaterialPropertyBlock();
 
-            _outline = CreateBar(OutlineMat, new Vector3(_width + 0.26f, BarHeight + 0.22f, 0.008f), new Vector3(0f, 0f, 0.012f));
-            _bg = CreateBar(BgMat, new Vector3(_width + 0.06f, BarHeight + 0.06f, 0.012f), Vector3.zero);
-            _fillRenderer = CreateBar(FillMat, new Vector3(_width, BarHeight, 0.02f), new Vector3(0f, 0f, -0.012f));
+            _outline = CreateBar(OutlineMat,
+                new Vector3(_width + OutlinePaddingX, BackgroundHeight + OutlinePaddingY, 0.006f),
+                new Vector3(0f, 0f, 0.016f));
+            _bg = CreateBar(BgMat,
+                new Vector3(_width, BackgroundHeight, 0.008f),
+                Vector3.zero);
+            _fillRenderer = CreateBar(FillMat,
+                new Vector3(Mathf.Max(_width - FillInsetX, 0.05f), BarHeight, 0.01f),
+                new Vector3(0f, 0f, -0.012f));
             _fill = _fillRenderer.transform;
 
             SetRenderers(false);
@@ -83,10 +97,17 @@ namespace Planet.Presentation
             transform.position = transform.parent.position + Vector3.up * _heightOffset;
             transform.rotation = _cam.transform.rotation; // билборд
 
+            float fillWidth = Mathf.Max(_width - FillInsetX, 0.05f);
             Vector3 s = _fill.localScale;
-            s.x = _width * frac;
+            s.x = fillWidth * frac;
             _fill.localScale = s;
-            _fill.localPosition = new Vector3(-_width * (1f - frac) * 0.5f, 0f, _fill.localPosition.z);
+            _fill.localPosition = new Vector3(-fillWidth * (1f - frac) * 0.5f, 0f, _fill.localPosition.z);
+
+            Color hpColor = HealthColor(frac);
+            _fillRenderer.GetPropertyBlock(_fillProps);
+            _fillProps.SetColor(BaseColorId, hpColor);
+            _fillProps.SetColor(ColorId, hpColor);
+            _fillRenderer.SetPropertyBlock(_fillProps);
         }
 
         private void SetRenderers(bool v)
@@ -97,8 +118,15 @@ namespace Planet.Presentation
         }
 
         private static Material OutlineMat => _outlineMat != null ? _outlineMat : (_outlineMat = MakeUnlit(new Color(1f, 1f, 1f, 1f)));
-        private static Material BgMat => _bgMat != null ? _bgMat : (_bgMat = MakeUnlit(new Color(0.03f, 0.03f, 0.03f, 1f)));
-        private static Material FillMat => _fillMat != null ? _fillMat : (_fillMat = MakeUnlit(new Color(0.25f, 0.95f, 0.30f, 1f)));
+        private static Material BgMat => _bgMat != null ? _bgMat : (_bgMat = MakeUnlit(new Color(0f, 0f, 0f, 1f)));
+        private static Material FillMat => _fillMat != null ? _fillMat : (_fillMat = MakeUnlit(new Color(0.2f, 1f, 0.08f, 1f)));
+
+        private static Color HealthColor(float frac)
+        {
+            if (frac <= 0.25f) return new Color(1f, 0.08f, 0.04f, 1f);
+            if (frac <= 0.55f) return new Color(1f, 0.82f, 0.05f, 1f);
+            return new Color(0.2f, 1f, 0.08f, 1f);
+        }
 
         private static Material MakeUnlit(Color c)
         {

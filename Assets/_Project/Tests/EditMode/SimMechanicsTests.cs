@@ -99,6 +99,65 @@ namespace Planet.Tests.EditMode
         }
 
         [Test]
+        public void MoveOrder_Reverses_WhenTargetCloseBehind()
+        {
+            var world = new SimWorld(seed: 1);
+            var e = world.Spawn(0, SimVector2.Zero, 100, 100, 0, 500);
+            e.ReverseDistance = 2 * SimConstants.UnitsPerMeter; // 2 м, лицо по умолчанию +Z
+
+            new MoveOrderCommand(0, new[] { e.Id }, SimVector2.FromMeters(0, -1)).Execute(world);
+
+            Assert.IsTrue(e.Reversing, "Близкая цель сзади → реверс.");
+            Assert.AreEqual(SimConstants.UnitsPerMeter, e.Heading.Z, "При реверсе лицо не меняется (+Z).");
+            Assert.IsTrue(e.HasTarget);
+        }
+
+        [Test]
+        public void MoveOrder_TurnsAround_WhenTargetFarBehind()
+        {
+            var world = new SimWorld(seed: 1);
+            var e = world.Spawn(0, SimVector2.Zero, 100, 100, 0, 500);
+            e.ReverseDistance = 2 * SimConstants.UnitsPerMeter;
+
+            new MoveOrderCommand(0, new[] { e.Id }, SimVector2.FromMeters(0, -5)).Execute(world);
+
+            Assert.IsFalse(e.Reversing, "Далёкая цель сзади → разворот, не реверс.");
+            Assert.Less(e.Heading.Z, 0, "Лицо развернулось к цели (-Z).");
+        }
+
+        [Test]
+        public void Waypoints_AreFollowedInOrder()
+        {
+            var world = new SimWorld(seed: 1);
+            var e = world.Spawn(0, SimVector2.Zero, 100, 1000);
+
+            new MoveOrderCommand(0, new[] { e.Id }, SimVector2.FromMeters(5, 0)).Execute(world);
+            new MoveOrderCommand(0, new[] { e.Id }, SimVector2.FromMeters(5, 5), queue: true).Execute(world);
+            Assert.AreEqual(1, e.Waypoints.Count, "Shift-приказ должен добавить точку в очередь.");
+
+            for (int i = 0; i < 300 && (e.HasTarget || e.Waypoints.Count > 0); i++) world.Tick(null);
+
+            Assert.AreEqual(SimVector2.FromMeters(5, 5), e.Position, "Должен дойти до последней точки маршрута.");
+            Assert.AreEqual(0, e.Waypoints.Count);
+        }
+
+        [Test]
+        public void Facing_AppliedAfterArrival()
+        {
+            var world = new SimWorld(seed: 1);
+            var e = world.Spawn(0, SimVector2.Zero, 100, 1000);
+
+            // Идём на +Z, но просим смотреть на +X.
+            new MoveOrderCommand(0, new[] { e.Id }, SimVector2.FromMeters(0, 3), queue: false, facing: SimVector2.FromMeters(1, 0))
+                .Execute(world);
+
+            for (int i = 0; i < 100 && (e.HasTarget || e.DesiredFacing.LengthSquared != 0); i++) world.Tick(null);
+
+            Assert.Greater(e.Heading.X, 0, "После прибытия лицо повернулось к заданному направлению (+X).");
+            Assert.AreEqual(0, e.Heading.Z);
+        }
+
+        [Test]
         public void IntegerSqrt_IsCorrectFloor()
         {
             Assert.AreEqual(0, SimMath.Sqrt(0));

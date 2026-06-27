@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace Planet.Presentation
@@ -18,6 +20,7 @@ namespace Planet.Presentation
 
         private Camera _cam;
         private readonly HashSet<UnitView> _selected = new HashSet<UnitView>();
+        private readonly List<UnitView> _selectionScratch = new List<UnitView>();
         private Vector2 _dragStart;
         private bool _dragging;
         private bool _isBox;
@@ -35,10 +38,18 @@ namespace Planet.Presentation
             if (_cam == null || mouse == null) return;
 
             Vector2 pos = mouse.position.ReadValue();
+            PruneInvalidSelection();
 
             // Раздельные проверки (не else-if): быстрый клик может прийти press+release в одном кадре.
             if (mouse.leftButton.wasPressedThisFrame)
             {
+                if (IsPointerOverUi())
+                {
+                    _dragging = false;
+                    _isBox = false;
+                    return;
+                }
+
                 _dragStart = pos;
                 _dragging = true;
                 _isBox = false;
@@ -98,20 +109,29 @@ namespace Planet.Presentation
             foreach (var v in UnitView.Active)
             {
                 if (!IsSelectable(v)) continue;
-                if (ScreenPos(v, out Vector2 sp) && r.Contains(sp)) Add(v);
+                if (ScreenFootprint(v, out Rect footprint, out _) && r.Overlaps(footprint, true)) Add(v);
             }
         }
 
         private UnitView PickNearest(Vector2 screenPos)
         {
             UnitView best = null;
-            float bestDist = _clickPixelThreshold;
+            float bestScore = 1f;
             foreach (var v in UnitView.Active)
             {
                 if (!IsSelectable(v)) continue;
-                if (!ScreenPos(v, out Vector2 sp)) continue;
-                float d = (sp - screenPos).magnitude;
-                if (d < bestDist) { bestDist = d; best = v; }
+                if (!ScreenFootprint(v, out Rect footprint, out Vector2 center)) continue;
+
+                float radiusPixels = Mathf.Max(_clickPixelThreshold, Mathf.Max(footprint.width, footprint.height) * 0.5f);
+                float distance = (center - screenPos).magnitude;
+                if (!footprint.Contains(screenPos) && distance > radiusPixels) continue;
+
+                float score = distance / Mathf.Max(radiusPixels, 1f);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = v;
+                }
             }
             return best;
         }
@@ -127,11 +147,80 @@ namespace Planet.Presentation
         }
 
         private bool OnScreen(UnitView v) =>
-            ScreenPos(v, out Vector2 sp) && sp.x >= 0 && sp.y >= 0 && sp.x <= Screen.width && sp.y <= Screen.height;
+            ScreenFootprint(v, out Rect footprint, out _) &&
+            footprint.Overlaps(new Rect(0f, 0f, Screen.width, Screen.height), true);
 
         private void Add(UnitView v) { if (_selected.Add(v)) v.SetSelected(true); }
         private void Remove(UnitView v) { if (_selected.Remove(v)) v.SetSelected(false); }
         private void Clear() { foreach (var v in _selected) if (v != null) v.SetSelected(false); _selected.Clear(); }
+
+        private void PruneInvalidSelection()
+        {
+            _selectionScratch.Clear();
+            foreach (var v in _selected)
+                if (!IsSelectable(v))
+                    _selectionScratch.Add(v);
+
+            foreach (var v in _selectionScratch)
+                Remove(v);
+
+            if (_lastClicked != null && !IsSelectable(_lastClicked))
+                _lastClicked = null;
+        }
+
+        private bool ScreenFootprint(UnitView v, out Rect footprint, out Vector2 center)
+        {
+            footprint = default;
+            center = default;
+
+            if (!ScreenPos(v, out center)) return false;
+
+            float radius = Mathf.Max(v.SelectionRadius, 0.25f);
+            Vector3 origin = v.transform.position;
+            SpanWorldFootprint(origin, radius, out Vector2 min, out Vector2 max);
+
+            const float minPickHalfSize = 8f;
+            min.x = Mathf.Min(min.x, center.x - minPickHalfSize);
+            min.y = Mathf.Min(min.y, center.y - minPickHalfSize);
+            max.x = Mathf.Max(max.x, center.x + minPickHalfSize);
+            max.y = Mathf.Max(max.y, center.y + minPickHalfSize);
+
+            footprint = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+            return true;
+        }
+
+        private void SpanWorldFootprint(Vector3 origin, float radius, out Vector2 min, out Vector2 max)
+        {
+            min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+            AddProjectedPoint(origin + new Vector3(-radius, 0f, -radius), ref min, ref max);
+            AddProjectedPoint(origin + new Vector3(-radius, 0f, radius), ref min, ref max);
+            AddProjectedPoint(origin + new Vector3(radius, 0f, -radius), ref min, ref max);
+            AddProjectedPoint(origin + new Vector3(radius, 0f, radius), ref min, ref max);
+            AddProjectedPoint(origin + Vector3.up * Mathf.Max(radius, 0.5f), ref min, ref max);
+        }
+
+        private void AddProjectedPoint(Vector3 world, ref Vector2 min, ref Vector2 max)
+        {
+            Vector3 p = _cam.WorldToScreenPoint(world);
+            min.x = Mathf.Min(min.x, p.x);
+            min.y = Mathf.Min(min.y, p.y);
+            max.x = Mathf.Max(max.x, p.x);
+            max.y = Mathf.Max(max.y, p.y);
+        }
+
+        private void OnDisable() => Clear();
+
+        private static bool IsPointerOverUi()
+        {
+            var mouse = Mouse.current;
+            if (mouse != null && PointerInputBlockers.BlocksScreenPoint(mouse.position.ReadValue()))
+                return true;
+
+            if (EventSystem.current == null) return false;
+            return EventSystem.current.IsPointerOverGameObject();
+        }
 
         private static bool IsShiftHeld()
         {
@@ -172,6 +261,35 @@ namespace Planet.Presentation
             GUI.DrawTexture(new Rect(r.x, r.y, t, r.height), _px);
             GUI.DrawTexture(new Rect(r.xMax - t, r.y, t, r.height), _px);
             GUI.color = old;
+        }
+    }
+
+    public static class PointerInputBlockers
+    {
+        private static readonly List<Func<Vector2, bool>> Blockers = new List<Func<Vector2, bool>>();
+
+        public static void Register(Func<Vector2, bool> blocker)
+        {
+            if (blocker != null && !Blockers.Contains(blocker))
+                Blockers.Add(blocker);
+        }
+
+        public static void Unregister(Func<Vector2, bool> blocker)
+        {
+            if (blocker != null)
+                Blockers.Remove(blocker);
+        }
+
+        public static bool BlocksScreenPoint(Vector2 screenPosition)
+        {
+            for (int i = Blockers.Count - 1; i >= 0; i--)
+            {
+                Func<Vector2, bool> blocker = Blockers[i];
+                if (blocker != null && blocker(screenPosition))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

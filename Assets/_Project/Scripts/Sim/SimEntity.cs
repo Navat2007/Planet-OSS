@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Planet.Sim
 {
     /// <summary>
@@ -22,6 +24,21 @@ namespace Planet.Sim
         /// <summary>Радиус юнита (мм) — для расхождения/подбора места при спавне.</summary>
         public int Radius;
 
+        /// <summary>Направление «лица» юнита (вектор в мм). По нему поворачивается модель.</summary>
+        public SimVector2 Heading = new SimVector2(0, SimConstants.UnitsPerMeter);
+
+        /// <summary>Едет ли юнит задним ходом (не разворачиваясь).</summary>
+        public bool Reversing;
+
+        /// <summary>Дистанция (мм), в пределах которой цель сзади → юнит пятится, а не разворачивается.</summary>
+        public int ReverseDistance;
+
+        /// <summary>Очередь точек маршрута (Shift+ПКМ).</summary>
+        public readonly Queue<SimVector2> Waypoints = new Queue<SimVector2>();
+
+        /// <summary>Желаемое направление после прибытия (для facing). Zero = не задано.</summary>
+        public SimVector2 DesiredFacing;
+
         public int Hp;
         public readonly int MaxHp;
         public bool Alive => Hp > 0;
@@ -40,10 +57,40 @@ namespace Planet.Sim
             Radius = radius;
         }
 
+        /// <summary>
+        /// Приказ движения в точку. Решает реверс (если разрешён и цель близко сзади):
+        /// тогда лицо не меняется, юнит пятится; иначе разворачивается к цели.
+        /// </summary>
+        public void OrderMoveTo(SimVector2 slot, bool allowReverse)
+        {
+            SimVector2 dir = slot - Position;
+            if (dir.LengthSquared == 0)
+            {
+                HasTarget = false;
+                Reversing = false;
+                return;
+            }
+
+            long dot = (long)dir.X * Heading.X + (long)dir.Z * Heading.Z;
+            long revSq = (long)ReverseDistance * ReverseDistance;
+            bool reverse = allowReverse && ReverseDistance > 0 && dir.LengthSquared <= revSq && dot < 0;
+
+            Reversing = reverse;
+            if (!reverse) Heading = dir; // развернуться к цели; при реверсе лицо сохраняем
+            Target = slot;
+            HasTarget = true;
+        }
+
         /// <summary>Один шаг движения к цели. Целочисленная арифметика → детерминированно.</summary>
         public void Step()
         {
-            if (!Alive || !HasTarget) return;
+            if (!Alive) return;
+
+            if (!HasTarget)
+            {
+                if (Waypoints.Count > 0) OrderMoveTo(Waypoints.Dequeue(), false);
+                if (!HasTarget) { ApplyDesiredFacingIfIdle(); return; }
+            }
 
             SimVector2 delta = Target - Position;
             long speed = SpeedPerTick;
@@ -53,6 +100,8 @@ namespace Planet.Sim
             {
                 Position = Target; // дошли (или почти) — фиксируемся на цели
                 HasTarget = false;
+                if (Waypoints.Count > 0) OrderMoveTo(Waypoints.Dequeue(), false);
+                else ApplyDesiredFacingIfIdle();
                 return;
             }
 
@@ -60,6 +109,17 @@ namespace Planet.Sim
             int nx = Position.X + (int)((long)delta.X * speed / dist);
             int nz = Position.Z + (int)((long)delta.Z * speed / dist);
             Position = new SimVector2(nx, nz);
+        }
+
+        /// <summary>Если маршрут пройден и задано желаемое направление — повернуть лицо к нему.</summary>
+        private void ApplyDesiredFacingIfIdle()
+        {
+            if (HasTarget || Waypoints.Count > 0) return;
+            if (DesiredFacing.LengthSquared == 0) return;
+
+            Heading = DesiredFacing;
+            Reversing = false;
+            DesiredFacing = SimVector2.Zero;
         }
     }
 }

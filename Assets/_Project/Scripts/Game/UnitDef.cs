@@ -25,6 +25,8 @@ namespace Planet.Game
         [Tooltip("Перезарядка, сек (Фаза 6)")] public float ReloadSeconds = 1f;
         [Tooltip("Радиус коллизии/расхождения, м")] public float CollisionRadius = 0.5f;
         [Tooltip("Радиус выделения/HP-бара, м")] public float SelectionRadius = 0.6f;
+        [Tooltip("Дистанция реверса, м: если цель ближе и сзади — юнит пятится, не разворачиваясь.")]
+        public float ReverseDistance = 1f;
 
         [Header("Визуал")]
         public GameObject VisualPrefab;
@@ -42,5 +44,8 @@ namespace Planet.Game
 
         /// <summary>Радиус коллизии в единицах симуляции (мм).</summary>
         public int CollisionRadiusSim => Mathf.Max(1, Mathf.RoundToInt(CollisionRadius * SimConstants.UnitsPerMeter));
+
+        /// <summary>Дистанция реверса в единицах симуляции (мм).</summary>
+        public int ReverseDistanceSim => Mathf.RoundToInt(ReverseDistance * SimConstants.UnitsPerMeter);
     }
 }

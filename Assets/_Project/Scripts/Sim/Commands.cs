@@ -24,6 +24,67 @@ namespace Planet.Sim
         }
     }
 
+    /// <summary>
+    /// Групповой приказ движения: расставляет выделенных в строй вокруг точки.
+    ///  - Queue=true (Shift) — добавить точку в очередь маршрута, иначе — заменить приказ;
+    ///  - Facing != Zero — задать направление после прибытия (без реверса), иначе авто (с реверсом).
+    /// </summary>
+    public sealed class MoveOrderCommand : ISimCommand
+    {
+        public readonly int OwnerId;
+        public readonly int[] EntityIds;
+        public readonly SimVector2 Target;
+        public readonly bool Queue;
+        public readonly SimVector2 Facing;
+
+        public MoveOrderCommand(int ownerId, int[] entityIds, SimVector2 target, bool queue = false, SimVector2 facing = default)
+        {
+            OwnerId = ownerId;
+            EntityIds = entityIds;
+            Target = target;
+            Queue = queue;
+            Facing = facing;
+        }
+
+        public void Execute(SimWorld world)
+        {
+            if (EntityIds == null) return;
+
+            var units = new System.Collections.Generic.List<SimEntity>(EntityIds.Length);
+            int maxRadius = 0;
+            foreach (int id in EntityIds)
+            {
+                SimEntity e = world.Find(id);
+                if (e == null || !e.Alive || e.OwnerId != OwnerId) continue;
+                units.Add(e);
+                if (e.Radius > maxRadius) maxRadius = e.Radius;
+            }
+            int n = units.Count;
+            if (n == 0) return;
+
+            var slots = new SimVector2[n];
+            SimFormation.Fill(n, maxRadius, Target, slots);
+
+            bool hasFacing = Facing.LengthSquared != 0;
+            for (int i = 0; i < n; i++)
+            {
+                SimEntity e = units[i];
+                e.DesiredFacing = Facing; // Zero, если не задано
+
+                if (Queue)
+                {
+                    if (!e.HasTarget && e.Waypoints.Count == 0) e.OrderMoveTo(slots[i], allowReverse: false);
+                    else e.Waypoints.Enqueue(slots[i]);
+                }
+                else
+                {
+                    e.Waypoints.Clear();
+                    e.OrderMoveTo(slots[i], allowReverse: !hasFacing); // явный facing отменяет реверс
+                }
+            }
+        }
+    }
+
     /// <summary>Приказ движения: задать цель набору сущностей одного владельца.</summary>
     public sealed class MoveCommand : ISimCommand
     {

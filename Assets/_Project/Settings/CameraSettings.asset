@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e1c2a3b4d5f6071829304a5b6c7d8e90, type: 3}
   m_Name: CameraSettings
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   StartDistance: 32
   MinDistance: 12
   MaxDistance: 55

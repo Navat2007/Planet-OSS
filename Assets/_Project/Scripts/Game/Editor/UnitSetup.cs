@@ -37,14 +37,14 @@ namespace Planet.Game.Editor
             GameObject soldierVisual = SetupSoldierAnimated(); // риг + контроллер + анимированный префаб
 
             CreateOrUpdate("Soldier", UnitCategory.Infantry, hp: 80, speed: 3.5f, range: 9f,
-                dmg: 8, reload: 0.8f, collision: 0.4f, selection: 0.6f, modelPath: SoldierModel,
+                dmg: 8, reload: 0.8f, collision: 0.4f, selection: 0.6f, reverse: 1f, modelPath: SoldierModel,
                 scale: 1f, visualOverride: soldierVisual);
 
             CreateOrUpdate("Tank", UnitCategory.Tank, hp: 320, speed: 2.2f, range: 14f,
-                dmg: 30, reload: 2.0f, collision: 1.2f, selection: 1.6f, modelPath: TankModel, scale: 1f);
+                dmg: 30, reload: 2.0f, collision: 1.2f, selection: 1.6f, reverse: 9f, modelPath: TankModel, scale: 1f);
 
             CreateOrUpdate("APC", UnitCategory.LightVehicle, hp: 170, speed: 3.2f, range: 10f,
-                dmg: 12, reload: 1.2f, collision: 1.0f, selection: 1.3f, modelPath: ApcModel, scale: 1f);
+                dmg: 12, reload: 1.2f, collision: 1.0f, selection: 1.3f, reverse: 9f, modelPath: ApcModel, scale: 1f);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -54,7 +54,7 @@ namespace Planet.Game.Editor
         // --- UnitDef ---
 
         private static void CreateOrUpdate(string name, UnitCategory category, int hp, float speed, float range,
-            int dmg, float reload, float collision, float selection, string modelPath, float scale,
+            int dmg, float reload, float collision, float selection, float reverse, string modelPath, float scale,
             GameObject visualOverride = null)
         {
             string path = $"{UnitsFolder}/{name}.asset";
@@ -71,6 +71,7 @@ namespace Planet.Game.Editor
             def.ReloadSeconds = reload;
             def.CollisionRadius = collision;
             def.SelectionRadius = selection;
+            def.ReverseDistance = reverse;
             def.VisualScale = scale;
 
             var visual = visualOverride != null ? visualOverride : AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);

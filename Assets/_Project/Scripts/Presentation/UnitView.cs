@@ -74,7 +74,9 @@ namespace Planet.Presentation
 
             float modelTop = ComputeModelHeight(); // верх модели (по рендерам)
             var hb = go.AddComponent<HealthBar>();
-            hb.Setup(_entity, Mathf.Max(SelectionRadius * 2.2f, 1.0f), modelTop + 0.7f);
+            float barWidth = Mathf.Max(SelectionRadius * 1.8f, 0.85f);
+            float barOffset = modelTop + Mathf.Clamp(SelectionRadius * 0.10f, 0.08f, 0.18f);
+            hb.Setup(_entity, barWidth, barOffset);
             return hb;
         }
 
@@ -106,11 +108,11 @@ namespace Planet.Presentation
             Vector3 target = SimConvert.ToWorld(_entity.Position, _y);
             transform.position = Vector3.Lerp(transform.position, target, 1f - Mathf.Exp(-PositionSmoothing * Time.deltaTime));
 
-            Vector3 move = target - _lastTargetWorld;
-            move.y = 0f;
-            if (move.sqrMagnitude > 1e-6f)
+            // Поворот модели по направлению «лица» из симуляции (при реверсе оно не меняется → юнит пятится).
+            Vector3 head = new Vector3(_entity.Heading.X, 0f, _entity.Heading.Z);
+            if (head.sqrMagnitude > 1e-6f)
             {
-                float yaw = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg + _yawOffset;
+                float yaw = Mathf.Atan2(head.x, head.z) * Mathf.Rad2Deg + _yawOffset;
                 Quaternion want = Quaternion.Euler(0f, yaw, 0f);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, want, TurnSpeedDegPerSec * Time.deltaTime);
             }

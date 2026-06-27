@@ -1,3 +1,4 @@
+using Planet.Presentation;
 using UnityEngine;
 
 namespace Planet.Game
@@ -8,10 +9,25 @@ namespace Planet.Game
     /// </summary>
     public sealed class DebugSpawnPanel : MonoBehaviour
     {
+        private static readonly Rect PanelRect = new Rect(10, 10, 240, 520);
+
         private UnitSpawner _spawner;
         private bool _visible = true;
 
         public void Init(UnitSpawner spawner) => _spawner = spawner;
+
+        private bool BlocksScreenPoint(Vector2 screenPosition)
+        {
+            if (!_visible || _spawner == null)
+                return false;
+
+            Vector2 guiPosition = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
+            return PanelRect.Contains(guiPosition);
+        }
+
+        private void OnEnable() => PointerInputBlockers.Register(BlocksScreenPoint);
+
+        private void OnDisable() => PointerInputBlockers.Unregister(BlocksScreenPoint);
 
         private void Update()
         {
@@ -23,7 +39,7 @@ namespace Planet.Game
         {
             if (!_visible || _spawner == null) return;
 
-            GUILayout.BeginArea(new Rect(10, 10, 240, 520), GUI.skin.box);
+            GUILayout.BeginArea(PanelRect, GUI.skin.box);
             GUILayout.Label("DEBUG SPAWN (F1 — скрыть)");
             DrawOwner("Игрок (синие)", 0);
             GUILayout.Space(10);
