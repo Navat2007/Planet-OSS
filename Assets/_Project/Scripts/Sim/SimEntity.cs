@@ -19,10 +19,14 @@ namespace Planet.Sim
         /// <summary>Дальность выстрела в единицах симуляции (мм). 0 = «остановка на дистанции» отключена.</summary>
         public int AttackRange;
 
+        /// <summary>Радиус юнита (мм) — для расхождения/подбора места при спавне.</summary>
+        public int Radius;
+
         public int Hp;
+        public readonly int MaxHp;
         public bool Alive => Hp > 0;
 
-        public SimEntity(int id, int ownerId, SimVector2 position, int hp, int speedPerTick, int attackRange = 0)
+        public SimEntity(int id, int ownerId, SimVector2 position, int hp, int speedPerTick, int attackRange = 0, int radius = 0)
         {
             Id = id;
             OwnerId = ownerId;
@@ -30,8 +34,10 @@ namespace Planet.Sim
             Target = position;
             HasTarget = false;
             Hp = hp;
+            MaxHp = hp;
             SpeedPerTick = speedPerTick;
             AttackRange = attackRange;
+            Radius = radius;
         }
 
         /// <summary>Один шаг движения к цели. Целочисленная арифметика → детерминированно.</summary>

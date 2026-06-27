@@ -80,6 +80,14 @@ namespace Planet.Presentation
             Configure();
         }
 
+        /// <summary>Центрировать камеру на точке мира (например, на стартовой точке игрока).</summary>
+        public void CenterOn(Vector3 worldPos)
+        {
+            _startPivot = new Vector3(worldPos.x, 0f, worldPos.z);
+            _pivot = ClampToMap(_startPivot);
+            ApplyTransform();
+        }
+
         private void Awake() => Configure();
 
         private void OnValidate() => Configure(); // живой предпросмотр в редакторе

@@ -31,9 +31,9 @@ namespace Planet.Sim
         public SimEntity Find(int id) => _byId.TryGetValue(id, out var e) ? e : null;
 
         /// <summary>Создать сущность. Id выдаётся детерминированно по счётчику.</summary>
-        public SimEntity Spawn(int ownerId, SimVector2 position, int hp, int speedPerTick, int attackRange = 0)
+        public SimEntity Spawn(int ownerId, SimVector2 position, int hp, int speedPerTick, int attackRange = 0, int radius = 0)
         {
-            var e = new SimEntity(_nextEntityId++, ownerId, position, hp, speedPerTick, attackRange);
+            var e = new SimEntity(_nextEntityId++, ownerId, position, hp, speedPerTick, attackRange, radius);
             _entities.Add(e);
             _byId[e.Id] = e;
             return e;

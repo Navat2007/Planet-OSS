@@ -39,5 +39,8 @@ namespace Planet.Game
 
         /// <summary>Дальность атаки в единицах симуляции (мм).</summary>
         public int AttackRangeSim => Mathf.RoundToInt(AttackRange * SimConstants.UnitsPerMeter);
+
+        /// <summary>Радиус коллизии в единицах симуляции (мм).</summary>
+        public int CollisionRadiusSim => Mathf.Max(1, Mathf.RoundToInt(CollisionRadius * SimConstants.UnitsPerMeter));
     }
 }

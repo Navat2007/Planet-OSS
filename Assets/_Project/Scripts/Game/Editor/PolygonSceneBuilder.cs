@@ -84,7 +84,25 @@ namespace Planet.Game.Editor
             EnsureGround();
             EnsureCamera();
             EnsureEnvironmentRoot();
+            EnsureSpawnPoints();
             EnsureGameRoot();
+        }
+
+        private static void EnsureSpawnPoints()
+        {
+            if (Object.FindFirstObjectByType<SpawnPoint>() != null) return;
+
+            var parent = new GameObject("SpawnPoints");
+            CreateSpawnPoint(parent.transform, "Spawn_Player", 0, new Vector3(0f, 0f, -15f));
+            CreateSpawnPoint(parent.transform, "Spawn_Enemy", 1, new Vector3(0f, 0f, 15f));
+        }
+
+        private static void CreateSpawnPoint(Transform parent, string name, int ownerId, Vector3 pos)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            go.AddComponent<SpawnPoint>().OwnerId = ownerId;
         }
 
         [MenuItem("Planet/Setup/Setup Menu Cover")]
