@@ -32,6 +32,19 @@ namespace Planet.Presentation
         /// <summary>Радиус для кольца выделения, м.</summary>
         public float SelectionRadius = 0.6f;
 
+        /// <summary>Инстанс модели юнита (для клонирования в призрак-превью).</summary>
+        public GameObject Model;
+
+        /// <summary>Поправка разворота модели (для ориентации призрака).</summary>
+        public float YawOffset => _yawOffset;
+
+        /// <summary>Точки приказа (реальные места кликов) — для отрисовки маршрута. Презентационное.</summary>
+        public readonly List<Vector3> RoutePoints = new List<Vector3>();
+
+        /// <summary>Время последней выдачи приказа — пока свежо, точки маршрута не срезаются
+        /// (команда движения исполняется на следующий тик, и юнит на пару кадров «бездействует»).</summary>
+        public float RouteFreshTime = -1f;
+
         public void Bind(SimEntity entity, float y = 0f, float yawOffset = 0f)
         {
             _entity = entity;

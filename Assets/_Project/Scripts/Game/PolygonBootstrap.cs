@@ -31,6 +31,9 @@ namespace Planet.Game
             var order = gameObject.AddComponent<OrderController>();
             order.Init(_runner, selection);
 
+            var route = gameObject.AddComponent<RouteOverlay>();
+            route.Init(selection);
+
             CenterCameraOnPlayerSpawn();
         }
 

@@ -26,7 +26,7 @@ namespace Planet.Presentation
         private bool _facing;
         private Vector3 _pressGround;
 
-        private readonly List<SimEntity> _tmpUnits = new List<SimEntity>();
+        private readonly List<UnitView> _tmpViews = new List<UnitView>();
 
         public void Init(SimRunner runner, SelectionController selection)
         {
@@ -55,8 +55,12 @@ namespace Planet.Presentation
             {
                 Vector3 d = cur - _pressGround;
                 d.y = 0f;
-                if (!_facing && d.magnitude > _facingDragMeters) _facing = true;
-                if (_facing) _ghost.Show(SelectedUnits(), _pressGround, d);
+                if (!_facing && d.magnitude > _facingDragMeters)
+                {
+                    _facing = true;
+                    _ghost.Begin(SelectedViews()); // клоны моделей под текущее выделение — один раз
+                }
+                if (_facing) _ghost.UpdatePose(_pressGround, d);
             }
 
             if (_rmbDown && mouse.rightButton.wasReleasedThisFrame)
@@ -94,11 +98,17 @@ namespace Planet.Presentation
 
         private void IssueMove(Vector3 world, bool queue, Vector3 facingWorld)
         {
-            var units = SelectedUnits();
-            if (units.Count == 0) return;
+            var views = SelectedViews();
+            if (views.Count == 0) return;
 
-            var ids = new int[units.Count];
-            for (int i = 0; i < units.Count; i++) ids[i] = units[i].Id;
+            var ids = new int[views.Count];
+            for (int i = 0; i < views.Count; i++)
+            {
+                ids[i] = views[i].Entity.Id;
+                if (!queue) views[i].RoutePoints.Clear(); // новый приказ — сбросить маршрут
+                views[i].RoutePoints.Add(world);          // точка ровно там, где кликнули
+                views[i].RouteFreshTime = Time.time;      // grace: не срезать точки, пока команда не исполнилась
+            }
 
             SimVector2 target = SimConvert.ToSim(world);
             SimVector2 facing = facingWorld.sqrMagnitude > 0.01f ? SimConvert.ToSim(facingWorld) : SimVector2.Zero;
@@ -108,13 +118,13 @@ namespace Planet.Presentation
             MoveMarker.Spawn(world);
         }
 
-        private IReadOnlyList<SimEntity> SelectedUnits()
+        private IReadOnlyList<UnitView> SelectedViews()
         {
-            _tmpUnits.Clear();
+            _tmpViews.Clear();
             foreach (var v in _selection.Selected)
                 if (v != null && v.Entity != null && v.Entity.Alive && v.Entity.OwnerId == _localOwnerId)
-                    _tmpUnits.Add(v.Entity);
-            return _tmpUnits;
+                    _tmpViews.Add(v);
+            return _tmpViews;
         }
 
         private static bool IsShiftHeld()

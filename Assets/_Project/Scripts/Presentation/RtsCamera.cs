@@ -62,6 +62,7 @@ namespace Planet.Presentation
         private float _targetDistance;  // целевое расстояние, к которому плавно идём
         private float _yaw;
         private bool _pointerActivated; // курсор хоть раз двигался — защита от старта в (0,0)
+        private bool _suppressEdgeUntilMove; // после клика не скроллить краем, пока мышь не сдвинут
         private Vector2 _mmbAnchor;     // точка нажатия СКМ
         private bool _mmbActive;        // идёт ли СКМ-панорама
 
@@ -239,6 +240,14 @@ namespace Planet.Presentation
             if (mouse == null) return Vector2.zero;
 
             if (mouse.middleButton.isPressed) return Vector2.zero; // во время СКМ-панорамы край не скроллит
+
+            // После клика мышью край не скроллит, пока мышь не сдвинут: иначе курсор,
+            // оставленный у края после приказа (ПКМ), «угоняет» камеру, пока игрок наблюдает.
+            if (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
+                _suppressEdgeUntilMove = true;
+            if (mouse.delta.ReadValue().sqrMagnitude > 4f)
+                _suppressEdgeUntilMove = false;
+            if (_suppressEdgeUntilMove) return Vector2.zero;
 
             if (!_pointerActivated)
             {

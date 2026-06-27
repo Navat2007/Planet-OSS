@@ -57,15 +57,17 @@ namespace Planet.Game
             e.ReverseDistance = def.ReverseDistanceSim;
 
             var root = new GameObject($"{def.DisplayName}_{ownerId}_{e.Id}");
+            GameObject model = null;
             if (def.VisualPrefab != null)
             {
-                var model = Instantiate(def.VisualPrefab, root.transform);
+                model = Instantiate(def.VisualPrefab, root.transform);
                 model.transform.localPosition = Vector3.zero;
                 model.transform.localRotation = Quaternion.identity;
                 model.transform.localScale = Vector3.one * def.VisualScale;
             }
 
             var view = root.AddComponent<UnitView>();
+            view.Model = model;
             view.TypeKey = def.DisplayName;
             view.SelectionRadius = def.SelectionRadius;
             view.Bind(e, y: 0f, yawOffset: def.VisualYawOffset);
