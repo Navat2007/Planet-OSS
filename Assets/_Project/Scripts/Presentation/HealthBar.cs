@@ -12,11 +12,11 @@ namespace Planet.Presentation
     /// </summary>
     public sealed class HealthBar : MonoBehaviour
     {
-        private const float BarHeight = 0.06f;
         private const float BackgroundHeight = 0.16f;
+        private const float BarHeight = BackgroundHeight; // заливка во всю высоту подложки
         private const float OutlinePaddingX = 0.06f;
         private const float OutlinePaddingY = 0.035f;
-        private const float FillInsetX = 0.12f;
+        private const float FillInsetX = 0f; // без боковых отступов — заливка во всю ширину
 
         private SimEntity _entity;
         private float _width;

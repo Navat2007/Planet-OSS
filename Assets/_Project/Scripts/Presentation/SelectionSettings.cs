@@ -8,6 +8,7 @@ namespace Planet.Presentation
     {
         public Color BoxColor = new Color(0.30f, 1f, 0.40f, 1f);
         public float BoxThickness = 2f;
+        [Range(0f, 1f)] public float BoxFillAlpha = 0.12f; // полупрозрачная заливка области выделения
         [Tooltip("Радиус клика по юниту в пикселях.")]
         public float ClickPixelThreshold = 35f;
         [Tooltip("Сдвиг курсора (px), с которого ЛКМ считается рамкой, а не кликом.")]

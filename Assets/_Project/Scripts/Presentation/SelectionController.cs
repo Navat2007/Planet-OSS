@@ -238,18 +238,34 @@ namespace Planet.Presentation
             float x1 = Mathf.Max(_dragStart.x, cur.x);
             float y0 = Screen.height - Mathf.Max(_dragStart.y, cur.y); // экран→GUI (инверсия Y)
             float y1 = Screen.height - Mathf.Min(_dragStart.y, cur.y);
-            DrawRectOutline(new Rect(x0, y0, x1 - x0, y1 - y0), GameSettings.Selection.BoxColor, GameSettings.Selection.BoxThickness);
+            var rect = new Rect(x0, y0, x1 - x0, y1 - y0);
+
+            Color boxColor = GameSettings.Selection.BoxColor;
+            var fill = new Color(boxColor.r, boxColor.g, boxColor.b, GameSettings.Selection.BoxFillAlpha);
+            DrawRect(rect, fill); // полупрозрачная заливка области
+            DrawRectOutline(rect, boxColor, GameSettings.Selection.BoxThickness);
+        }
+
+        private static void DrawRect(Rect r, Color c)
+        {
+            EnsurePixel();
+            Color old = GUI.color;
+            GUI.color = c;
+            GUI.DrawTexture(r, _px);
+            GUI.color = old;
+        }
+
+        private static void EnsurePixel()
+        {
+            if (_px != null) return;
+            _px = new Texture2D(1, 1);
+            _px.SetPixel(0, 0, Color.white);
+            _px.Apply();
         }
 
         private static void DrawRectOutline(Rect r, Color c, float t)
         {
-            if (_px == null)
-            {
-                _px = new Texture2D(1, 1);
-                _px.SetPixel(0, 0, Color.white);
-                _px.Apply();
-            }
-
+            EnsurePixel();
             Color old = GUI.color;
             GUI.color = c;
             GUI.DrawTexture(new Rect(r.x, r.y, r.width, t), _px);
