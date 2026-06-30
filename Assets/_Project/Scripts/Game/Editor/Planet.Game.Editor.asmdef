@@ -4,7 +4,9 @@
     "references": [
         "Planet.Sim",
         "Planet.Presentation",
-        "Planet.Game"
+        "Planet.Game",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.HighDefinition.Runtime"
     ],
     "includePlatforms": [
         "Editor"

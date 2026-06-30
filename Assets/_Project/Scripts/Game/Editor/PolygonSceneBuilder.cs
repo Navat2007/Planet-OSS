@@ -57,7 +57,7 @@ namespace Planet.Game.Editor
                 scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             }
 
-            SetupRtsLevel(scene);
+            SetupRtsLevel(scene, withGround: true); // полигон-песочница: плоская земля уместна
             EnsureCursorSettings();
             EnsureGameplaySettings();
             WireSettingsToBootstrap();
@@ -73,7 +73,9 @@ namespace Planet.Game.Editor
         public static void SetupActiveScene()
         {
             Scene scene = SceneManager.GetActiveScene();
-            SetupRtsLevel(scene);
+            // Землю-плоскость не создаём: реальные карты используют террейн, и плоскость
+            // Ground с ним конфликтует. Настраиваем только свет, камеру, спавны и пр.
+            SetupRtsLevel(scene, withGround: false);
             EnsureCursorSettings();
             EnsureGameplaySettings();
             WireSettingsToBootstrap();
@@ -81,11 +83,15 @@ namespace Planet.Game.Editor
             Debug.Log("[Planet] Активная сцена настроена как RTS-уровень. Не забудьте сохранить (Ctrl+S).");
         }
 
-        /// <summary>Добавить в сцену недостающие объекты RTS-уровня (идемпотентно).</summary>
-        private static void SetupRtsLevel(Scene scene)
+        /// <summary>
+        /// Добавить в сцену недостающие объекты RTS-уровня (идемпотентно).
+        /// <paramref name="withGround"/> — создавать ли плоскую землю Ground (для полигона-песочницы);
+        /// для реальных карт с террейном земля не нужна.
+        /// </summary>
+        private static void SetupRtsLevel(Scene scene, bool withGround)
         {
             EnsureSun();
-            EnsureGround();
+            if (withGround) EnsureGround();
             EnsureCamera();
             EnsureEnvironmentRoot();
             EnsureSpawnPoints();
