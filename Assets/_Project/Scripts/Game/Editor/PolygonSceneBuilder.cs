@@ -306,7 +306,15 @@ namespace Planet.Game.Editor
 
         private static void EnsureGround()
         {
-            if (GameObject.Find("Ground") != null) return;
+            var existing = GameObject.Find("Ground");
+            if (existing != null)
+            {
+                // Земля есть — починить материал, если он отсутствует (например, после смены пайплайна).
+                var r = existing.GetComponent<Renderer>();
+                if (r != null && r.sharedMaterial == null)
+                    r.sharedMaterial = LoadOrCreateGroundMaterial();
+                return;
+            }
 
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Ground";
@@ -429,7 +437,10 @@ namespace Planet.Game.Editor
             if (mat != null) return mat;
 
             EnsureFolder(ArtFolder);
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            var rp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+            bool hdrp = rp != null && rp.GetType().Name.Contains("HDRenderPipeline");
+            Shader shader = hdrp ? Shader.Find("HDRP/Lit") : Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
             mat = new Material(shader) { name = "GroundMaterial" };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", GroundColor);

@@ -22,9 +22,7 @@ namespace Planet.Presentation
             go.transform.localScale = new Vector3(s.StartSize, 0.02f, s.StartSize);
 
             var r = go.GetComponent<Renderer>();
-            var c = s.Color;
-            if (r.material.HasProperty("_BaseColor")) r.material.SetColor("_BaseColor", c);
-            if (r.material.HasProperty("_Color")) r.material.SetColor("_Color", c);
+            r.material = MaterialFactory.UnlitOpaque(s.Color);
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
             var marker = go.AddComponent<MoveMarker>();

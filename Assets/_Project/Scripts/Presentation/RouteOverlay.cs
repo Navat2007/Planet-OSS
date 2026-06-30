@@ -181,15 +181,9 @@ namespace Planet.Presentation
             get
             {
                 if (_lineTemplate != null) return _lineTemplate;
-                Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
-                if (sh == null) sh = Shader.Find("Sprites/Default");
                 var rc = GameSettings.Route.Color;
-                _lineTemplate = MakeTransparent(new Material(sh),
-                    new Color(rc.r, rc.g, rc.b, GameSettings.Route.LineAlpha));
-
-                Texture2D dash = MakeDashTexture();
-                if (_lineTemplate.HasProperty("_BaseMap")) _lineTemplate.SetTexture("_BaseMap", dash);
-                _lineTemplate.mainTexture = dash;
+                _lineTemplate = MaterialFactory.UnlitTransparent(new Color(rc.r, rc.g, rc.b, GameSettings.Route.LineAlpha));
+                MaterialFactory.ApplyTexture(_lineTemplate, MakeDashTexture());
                 return _lineTemplate;
             }
         }
@@ -199,27 +193,10 @@ namespace Planet.Presentation
             get
             {
                 if (_flagMat != null) return _flagMat;
-                Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
-                if (sh == null) sh = Shader.Find("Sprites/Default");
                 var rc = GameSettings.Route.Color;
-                _flagMat = MakeTransparent(new Material(sh),
-                    new Color(rc.r, rc.g, rc.b, GameSettings.Route.FlagAlpha));
+                _flagMat = MaterialFactory.UnlitTransparent(new Color(rc.r, rc.g, rc.b, GameSettings.Route.FlagAlpha));
                 return _flagMat;
             }
-        }
-
-        private static Material MakeTransparent(Material m, Color c)
-        {
-            m.SetFloat("_Surface", 1f); // Transparent
-            m.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-            m.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            m.SetInt("_ZWrite", 0);
-            m.DisableKeyword("_SURFACE_TYPE_OPAQUE");
-            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            m.renderQueue = (int)RenderQueue.Transparent;
-            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
-            if (m.HasProperty("_Color")) m.SetColor("_Color", c);
-            return m;
         }
 
         /// <summary>Текстура штриха: половина непрозрачная, половина прозрачная, повтор по длине.</summary>

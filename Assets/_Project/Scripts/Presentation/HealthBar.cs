@@ -34,6 +34,7 @@ namespace Planet.Presentation
         private static Material _fillMat;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int UnlitColorId = Shader.PropertyToID("_UnlitColor"); // HDRP/Unlit
         private MaterialPropertyBlock _fillProps;
 
         public void Setup(SimEntity entity, float width, float heightOffset)
@@ -107,6 +108,7 @@ namespace Planet.Presentation
             _fillRenderer.GetPropertyBlock(_fillProps);
             _fillProps.SetColor(BaseColorId, hpColor);
             _fillProps.SetColor(ColorId, hpColor);
+            _fillProps.SetColor(UnlitColorId, hpColor);
             _fillRenderer.SetPropertyBlock(_fillProps);
         }
 
@@ -129,14 +131,6 @@ namespace Planet.Presentation
             return s.ColorFull;
         }
 
-        private static Material MakeUnlit(Color c)
-        {
-            Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
-            if (sh == null) sh = Shader.Find("Unlit/Color");
-            var m = new Material(sh);
-            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
-            if (m.HasProperty("_Color")) m.SetColor("_Color", c);
-            return m;
-        }
+        private static Material MakeUnlit(Color c) => MaterialFactory.UnlitOpaque(c);
     }
 }

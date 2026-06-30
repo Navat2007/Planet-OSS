@@ -96,22 +96,7 @@ namespace Planet.Presentation
             get
             {
                 if (_mat != null) return _mat;
-                Shader sh = Shader.Find("Universal Render Pipeline/Unlit");
-                if (sh == null) sh = Shader.Find("Unlit/Color");
-                _mat = new Material(sh);
-
-                // Полупрозрачный режим URP Unlit.
-                _mat.SetFloat("_Surface", 1f); // Transparent
-                _mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-                _mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-                _mat.SetInt("_ZWrite", 0);
-                _mat.DisableKeyword("_SURFACE_TYPE_OPAQUE");
-                _mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                _mat.renderQueue = (int)RenderQueue.Transparent;
-
-                var c = GameSettings.Ghost.Color; // голограмма (цвет из настроек)
-                if (_mat.HasProperty("_BaseColor")) _mat.SetColor("_BaseColor", c);
-                if (_mat.HasProperty("_Color")) _mat.SetColor("_Color", c);
+                _mat = MaterialFactory.UnlitTransparent(GameSettings.Ghost.Color); // голограмма (цвет из настроек)
                 return _mat;
             }
         }
