@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1c2a3b4d5f6071829304a5b6c7d8e90, type: 3}
   m_Name: CameraSettings
   m_EditorClassIdentifier: 
-  StartDistance: 32
-  MinDistance: 12
-  MaxDistance: 55
+  StartDistance: 100
+  MinDistance: 50
+  MaxDistance: 150
   ZoomStep: 4
   ZoomLerpSpeed: 10
   PanSpeed: 30
   EdgeScrollPixels: 64
   EdgeScrollEnabled: 1
-  MmbPanAcceleration: 0.2
+  MmbPanAcceleration: 0.8
   MmbDeadZonePixels: 6
   RotateSpeed: 90
   MouseRotateSensitivity: 0.2
