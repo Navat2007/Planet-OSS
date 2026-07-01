@@ -234,7 +234,7 @@ Light:
   serializedVersion: 13
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 130000
+  m_Intensity: 100000
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
@@ -745,7 +745,7 @@ Light:
   serializedVersion: 13
   m_Type: 1
   m_Color: {r: 0.64465404, g: 0.84683985, b: 1, a: 1}
-  m_Intensity: 0.5
+  m_Intensity: 100000
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 0
@@ -944,7 +944,8 @@ PrefabInstance:
       propertyPath: m_AllowMSAA
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -7466197404652938586, guid: e8813b3cf70770449a0881509f263931, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -1263,7 +1264,7 @@ Terrain:
   m_GameObject: {fileID: 834730398}
   m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 6da66ba4bd31ab0459c588551582ba47, type: 2}
+  m_TerrainData: {fileID: 0}
   m_TreeDistance: 5000
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
