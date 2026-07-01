@@ -7,8 +7,10 @@
   <Project Path="Planet.Sim.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Planet.UI.Editor.csproj" />
+  <Project Path="AURW.csproj" />
   <Project Path="Planet.UI.csproj" />
   <Project Path="Planet.Tests.PlayMode.csproj" />
   <Project Path="JBooth.MicroSplat.Core.csproj" />
   <Project Path="Planet.Tests.EditMode.csproj" />
+  <Project Path="AURW.Editor.csproj" />
 </Solution>
