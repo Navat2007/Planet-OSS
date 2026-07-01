@@ -65,11 +65,18 @@ namespace Planet.Presentation
         private bool _suppressEdgeUntilMove; // после клика не скроллить краем, пока мышь не сдвинут
         private Vector2 _mmbAnchor;     // точка нажатия СКМ
         private bool _mmbActive;        // идёт ли СКМ-панорама
+        private Vector2 _mmbOffset;     // смещение курсора от точки нажатия СКМ (для boost-курсора)
 
         public Vector3 Pivot => _pivot;
         public float Distance => _distance;
         public float TargetDistance => _targetDistance;
         public float Yaw => _yaw;
+
+        /// <summary>Идёт ли ускоренная СКМ-панорама (мышь уведена за мёртвую зону).</summary>
+        public bool IsBoostPanning => _mmbActive && _mmbOffset.magnitude >= _mmbDeadZonePixels;
+
+        /// <summary>Экранное смещение курсора от точки нажатия СКМ — направление ускорения (x вправо, y вверх).</summary>
+        public Vector2 BoostOffsetPixels => _mmbOffset;
 
         /// <summary>Программная настройка (необязательна — обычно всё задаётся в Инспекторе).</summary>
         public void Initialize(Vector3 pivot, Vector2 mapMin, Vector2 mapMax, float yaw = 0f)
@@ -303,14 +310,15 @@ namespace Planet.Presentation
             if (!mouse.middleButton.isPressed)
             {
                 _mmbActive = false;
+                _mmbOffset = Vector2.zero;
                 return;
             }
             if (!_mmbActive) return;
 
-            Vector2 offset = mouse.position.ReadValue() - _mmbAnchor;
-            if (offset.magnitude < _mmbDeadZonePixels) return;
+            _mmbOffset = mouse.position.ReadValue() - _mmbAnchor;
+            if (_mmbOffset.magnitude < _mmbDeadZonePixels) return;
 
-            PanByScreenOffset(offset, dt);
+            PanByScreenOffset(_mmbOffset, dt);
         }
 
         private float ReadZoomInput()

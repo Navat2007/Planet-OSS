@@ -106,18 +106,34 @@ namespace Planet.Game.Editor
             }
 
             // Fixed Exposure — убирает авто-задирание яркости (главную причину засветки).
-            if (!profile.TryGet<Exposure>(out var exposure)) exposure = profile.Add<Exposure>(true);
+            var exposure = GetOrAddOverride<Exposure>(profile);
             exposure.active = true;
             exposure.mode.Override(ExposureMode.Fixed);
             exposure.fixedExposure.Override(FixedExposureEV);
 
             // Физическое небо как источник неба и ambient (иначе фон/окружение «никакие»).
-            if (!profile.TryGet<VisualEnvironment>(out var visualEnv)) visualEnv = profile.Add<VisualEnvironment>(true);
-            if (!profile.TryGet<PhysicallyBasedSky>(out var sky)) sky = profile.Add<PhysicallyBasedSky>(true);
+            var visualEnv = GetOrAddOverride<VisualEnvironment>(profile);
+            var sky = GetOrAddOverride<PhysicallyBasedSky>(profile);
             sky.active = true;
             visualEnv.skyType.Override((int)SkyType.PhysicallyBased);
 
             EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Вернуть override нужного типа из профиля, добавив его при отсутствии. Важно:
+        /// компоненты Volume — это ScriptableObject-подассеты профиля, поэтому новый
+        /// компонент нужно ещё и зарегистрировать через AddObjectToAsset, иначе при
+        /// сохранении профиль останется пустым (override не персистится).
+        /// </summary>
+        private static T GetOrAddOverride<T>(VolumeProfile profile) where T : VolumeComponent
+        {
+            if (profile.TryGet<T>(out T existing)) return existing;
+            T comp = profile.Add<T>(true);
+            comp.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+            AssetDatabase.AddObjectToAsset(comp, profile);
+            return comp;
         }
     }
 }
