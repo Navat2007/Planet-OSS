@@ -10,25 +10,52 @@ namespace Planet.Presentation
     ///
     /// Рисуем через OnGUI: аппаратный курсор (Cursor.SetCursor) вращать нельзя, поэтому на
     /// время boost переходим на программную отрисовку.
+    ///
+    /// Живёт глобально: создаётся один раз через <see cref="BoostCursorBootstrap"/> и
+    /// переживает смену сцен, поэтому камеру (она у каждой сцены своя) переподхватывает
+    /// автоматически, когда старая ссылка становится недействительной.
     /// </summary>
     public sealed class BoostCursor : MonoBehaviour
     {
-        [Tooltip("Камера, чья СКМ-панорама рисует boost-курсор. Пусто — найдём в сцене.")]
+        [Tooltip("Камера, чья СКМ-панорама рисует boost-курсор. Пусто — найдём в активной сцене.")]
         [SerializeField] private RtsCamera _camera;
-        [Tooltip("Текстура-стрелка, указывающая ВВЕРХ (CursorBoost2). Тип импорта — Default.")]
+        [Tooltip("Текстура-стрелка, указывающая ВВЕРХ (CursorBoost2).")]
         [SerializeField] private Texture2D _boostTexture;
         [Tooltip("Размер значка на экране, пиксели.")]
         [SerializeField] private Vector2 _size = new Vector2(48f, 48f);
 
         private bool _active;
 
+        public static BoostCursor Instance { get; private set; }
+
+        /// <summary>Задать текстуру/размер programmatically (используется BoostCursorBootstrap).</summary>
+        public void Configure(Texture2D texture, Vector2 size)
+        {
+            _boostTexture = texture;
+            _size = size;
+        }
+
         private void Awake()
         {
-            if (_camera == null) _camera = FindFirstObjectByType<RtsCamera>();
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject); // дубликат при возврате в сцену — убираем
+                return;
+            }
+            Instance = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         private void Update()
         {
+            // Камера живёт в игровой сцене (не persistent), поэтому при смене сцены старая
+            // ссылка «умирает» — переподхватываем, пока не найдём (или сцена без камеры, например меню).
+            if (_camera == null) _camera = FindFirstObjectByType<RtsCamera>();
+
             bool boost = _boostTexture != null && _camera != null && _camera.IsBoostPanning;
             if (boost == _active) return;
             _active = boost;

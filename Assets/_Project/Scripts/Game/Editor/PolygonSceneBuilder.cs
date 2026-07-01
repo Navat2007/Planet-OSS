@@ -23,8 +23,10 @@ namespace Planet.Game.Editor
         private const string GroundMaterialPath = ArtFolder + "/GroundMaterial.mat";
         private const string CursorFolder = ArtFolder + "/Cursor";
         private const string CursorTexturePath = CursorFolder + "/Cursor_small.png"; // 25x25 — годен для аппаратного курсора
+        private const string BoostCursorTexturePath = CursorFolder + "/CursorBoost2.png";
         private const string ResourcesFolder = "Assets/_Project/Resources";
         private const string CursorSettingsPath = ResourcesFolder + "/CursorSettings.asset";
+        private const string BoostCursorSettingsPath = ResourcesFolder + "/BoostCursorSettings.asset";
         private const string MenuCoverFolder = ResourcesFolder + "/UI";
         private const string MenuCoverPath = MenuCoverFolder + "/MainMenuCover.png";
         private const string SettingsFolder = "Assets/_Project/Settings";
@@ -59,6 +61,7 @@ namespace Planet.Game.Editor
 
             SetupRtsLevel(scene, withGround: true); // полигон-песочница: плоская земля уместна
             EnsureCursorSettings();
+            EnsureBoostCursorSettings();
             EnsureGameplaySettings();
             WireSettingsToBootstrap();
 
@@ -77,6 +80,7 @@ namespace Planet.Game.Editor
             // Ground с ним конфликтует. Настраиваем только свет, камеру, спавны и пр.
             SetupRtsLevel(scene, withGround: false);
             EnsureCursorSettings();
+            EnsureBoostCursorSettings();
             EnsureGameplaySettings();
             WireSettingsToBootstrap();
             EditorSceneManager.MarkSceneDirty(scene);
@@ -140,6 +144,15 @@ namespace Planet.Game.Editor
             EnsureCursorSettings();
             AssetDatabase.SaveAssets();
             var settings = AssetDatabase.LoadAssetAtPath<CursorSettings>(CursorSettingsPath);
+            if (settings != null) Selection.activeObject = settings;
+        }
+
+        [MenuItem("Planet/Setup/Create Boost Cursor Settings")]
+        public static void CreateBoostCursorSettingsMenu()
+        {
+            EnsureBoostCursorSettings();
+            AssetDatabase.SaveAssets();
+            var settings = AssetDatabase.LoadAssetAtPath<BoostCursorSettings>(BoostCursorSettingsPath);
             if (settings != null) Selection.activeObject = settings;
         }
 
@@ -214,6 +227,34 @@ namespace Planet.Game.Editor
                 AssetDatabase.CreateAsset(settings, CursorSettingsPath);
             }
             else if (settings.Texture == null && tex != null)
+            {
+                settings.Texture = tex;
+                EditorUtility.SetDirty(settings);
+            }
+        }
+
+        /// <summary>
+        /// Создать (если нет) глобальный ассет boost-курсора в Resources. Применяется на старте
+        /// во всех сценах (см. BoostCursorBootstrap). Текстура — готовый арт CursorBoost2.png.
+        /// </summary>
+        private static void EnsureBoostCursorSettings()
+        {
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(BoostCursorTexturePath);
+            if (tex == null)
+            {
+                Debug.LogWarning($"[Planet] Текстура boost-курсора не найдена: {BoostCursorTexturePath}");
+                return;
+            }
+
+            var settings = AssetDatabase.LoadAssetAtPath<BoostCursorSettings>(BoostCursorSettingsPath);
+            if (settings == null)
+            {
+                EnsureFolder(ResourcesFolder);
+                settings = ScriptableObject.CreateInstance<BoostCursorSettings>();
+                settings.Texture = tex;
+                AssetDatabase.CreateAsset(settings, BoostCursorSettingsPath);
+            }
+            else if (settings.Texture == null)
             {
                 settings.Texture = tex;
                 EditorUtility.SetDirty(settings);
