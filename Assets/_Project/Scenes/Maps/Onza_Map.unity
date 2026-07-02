@@ -2598,7 +2598,7 @@ GameObject:
   - component: {fileID: 1909673042}
   - component: {fileID: 1909673041}
   m_Layer: 0
-  m_Name: Terrain
+  m_Name: OnzaMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
